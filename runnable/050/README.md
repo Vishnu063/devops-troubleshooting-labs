@@ -1,16 +1,33 @@
-# Runnable Kubernetes lab 050
+# Runnable lab 050
 
-Requires Docker, kubectl, and a local kind cluster named `devops-labs`. Use [setup](../../docs/LABS.md).
+Level 2 · kubernetes · [Incident brief](../../scenarios/level-2/050/README.md)
+
+Prerequisites and isolation: [local setup](../../docs/LABS.md). Hidden practice: [sessions](../../docs/SESSIONS.md).
 
 ```bash
 python3 lab.py up 050
-kubectl --context kind-devops-labs -n devops-lab-050 get pods
-kubectl --context kind-devops-labs -n devops-lab-050 get events --sort-by=.metadata.creationTimestamp
 python3 lab.py check 050
 ```
 
-Investigate the running resources and repair them with kubectl. The initial check should fail. `up` restores the original workload specification; use `down` followed by `up` for a clean reset including auxiliary resources.
+Investigate **namespace devops-lab-050**. The first check must fail once setup has completed. Registry downloads and image startup can create unrelated early failures; inspect actual logs and events.
 
-The grader checks the expected Deployment and a request through the Service (startup-file case 023 checks the mounted file instead). A successful grader is a training check, not a complete production test.
+```bash
+kubectl --context kind-devops-labs -n devops-lab-050 get pods,svc
+kubectl --context kind-devops-labs -n devops-lab-050 get events --sort-by=.metadata.creationTimestamp
+```
 
-[Repair reference — spoilers](solution.md) · [Incident brief](../../scenarios/level-2/050/README.md)
+Repair live resources using kubectl. `up` reapplies the broken resources but does not remove auxiliary resources from an earlier repair. `reset` gives a clean namespace.
+
+## Verify, repeat, clean up
+
+```bash
+python3 lab.py check 050 --samples 5 --interval 1
+python3 lab.py reset 050
+# The original fault should be present again.
+python3 lab.py check 050
+python3 lab.py down 050
+```
+
+The grader makes repeated checks and rejects restarts or container replacement during its observation window. Kubernetes checks use the workload and Service path; case 081 additionally probes every ready endpoint. Docker 033 queries actual scrape results; 049 performs a real database write/read round trip. See [verification limits](../../docs/LABS.md).
+
+[Repair reference — spoilers](solution.md)

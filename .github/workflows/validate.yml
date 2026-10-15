@@ -26,20 +26,16 @@ jobs:
           git diff --exit-code
   docker:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    strategy:
-      fail-fast: false
-      matrix:
-        id: ['019', '020', '021']
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: python3 scripts/ci_native.py docker --id ${{ matrix.id }}
+      - run: python3 scripts/ci_native.py docker
   kubernetes:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -52,8 +48,13 @@ jobs:
           sudo mv kind /usr/local/bin/kind
       - name: Create disposable cluster
         run: kind create cluster --name devops-labs --wait 120s
-      - name: Verify faults and repairs
+      - name: Verify faults, partial repairs, recovery, and reset
         run: python3 scripts/ci_native.py kubernetes
+      - name: Collect Kubernetes diagnostics on failure
+        if: failure()
+        run: |
+          kubectl --context kind-devops-labs get pods -A -o wide || true
+          kubectl --context kind-devops-labs get events -A --sort-by=.metadata.creationTimestamp || true
       - name: Delete disposable cluster
         if: always()
         run: kind delete cluster --name devops-labs

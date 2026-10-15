@@ -1,0 +1,10 @@
+{
+  "005": "docker", "006": "docker", "010": "docker", "012": "docker",
+  "013": "git", "019": "docker", "020": "docker", "021": "docker",
+  "023": "kubernetes", "024": "kubernetes", "025": "kubernetes",
+  "026": "kubernetes", "027": "kubernetes", "033": "docker",
+  "040": "git", "049": "docker", "050": "kubernetes",
+  "051": "kubernetes", "052": "kubernetes", "054": "kubernetes",
+  "056": "kubernetes", "057": "kubernetes", "080": "kubernetes",
+  "081": "kubernetes", "M01": "kubernetes", "M02": "kubernetes", "M03": "kubernetes"
+}

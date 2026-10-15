@@ -19,3 +19,7 @@ For a native lab change, prove the original fault fails grading and the repaired
 Solutions belong in separate files. Briefs should state impact and goals without handing over the repair. Tests must verify recovery behavior rather than just the existence of a resource.
 
 Use the issue templates for broken labs or improvements. Do not include secrets or confidential incident logs.
+
+Runtime assignments live in `data/runtimes.json`; the extra compound catalog is `data/compounds.json`. Preserve all original 100 IDs and level boundaries. New compound incidents must stay outside that catalog.
+
+For runtime changes, CI must observe the intended fault, verify recovery with repeated checks, reset to the original failure, and clean up. A compound must also reject an incomplete repair. Session changes must retain honest distinctions between self-assessed explanations and native recovery verification.

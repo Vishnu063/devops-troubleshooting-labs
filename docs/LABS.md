@@ -1,37 +1,49 @@
 # Run local faults
 
-Run commands from the repository root. First read the incident brief with `python3 lab.py show ID`.
+Run commands from the repository root. Read a case with `python3 lab.py show ID`, or use a [hidden session](SESSIONS.md) to avoid its title.
 
 ## Lab inventory
 
 | Runtime | IDs | Prerequisites |
 | --- | --- | --- |
 | Git | 013, 040 | Git and Python 3.10+ |
-| Docker | 019, 020, 021 | Docker Engine, Compose v2, image registry access |
-| Kubernetes | 023, 024, 025, 026, 027, 050, 051, 052, 056, 057 | Docker, kind, kubectl, image registry access |
+| Docker | 005, 006, 010, 012, 019, 020, 021, 033, 049 | Docker Engine, Compose v2, registry access |
+| Kubernetes | 023–027, 050–052, 054, 056, 057, 080, 081 | Docker, kind, kubectl, registry access |
+| Additional compounds | M01–M03 | Same Kubernetes prerequisites |
 
-The remaining 85 cases are supplied-evidence investigations. They have no infrastructure setup or automated repair grader.
+There are **24 runnable scenarios out of the final 100**, plus three compound incidents. The remaining **76** are supplied-evidence investigations with no infrastructure setup or automated repair grader. A local analogue can reproduce the same failure class with a smaller application or dependency than the supplied case study.
 
 ## Git
 
-`up` creates an isolated repository under `.lab-state/ID/repo`. No remote is configured. Repair it using normal Git commands. The grader expects a clean committed result. Case 013 must preserve TIMEOUT=60 from the feature branch and RETRIES=5 from main in a merge commit. Case 040 must preserve history while restoring TIMEOUT=30 and RETRIES=3 through a new commit.
+`up` creates an isolated repository under `.lab-state/ID/repo`, without a remote. The grader requires a clean committed result and verifies that the baseline commits remain ancestors of HEAD.
+
+- 013: preserve TIMEOUT=60 from feature and RETRIES=5 from main in a merge commit.
+- 040: restore TIMEOUT=30 and RETRIES=3 through a new commit while preserving existing history.
+
+Git checks are a single repository-state validation; networked stability sampling does not apply.
 
 ## Docker
 
-Use a development machine with Docker available. Labs bind HTTP ports to loopback; Docker assigns the host port. `up` prints the editable Compose workspace. It preserves existing edits, so rerun it after changing that file.
+Published HTTP ports bind to loopback, with Docker assigning the host port. `up` prints an editable workspace. Compose settings and files under its `assets/` directory are preserved on repeated `up` calls.
 
 ```bash
-python3 lab.py up 020
-docker compose -p devopslab020 -f .lab-state/020/compose.json ps -a
-docker compose -p devopslab020 -f .lab-state/020/compose.json logs
-python3 lab.py check 020
+python3 lab.py up 012
+docker compose -p devopslab012 -f .lab-state/012/compose.json ps -a
+docker compose -p devopslab012 -f .lab-state/012/compose.json logs
+python3 lab.py check 012
 ```
 
-A cold image download can take time. Establish registry access before interpreting application faults. The grader makes a real HTTP request through the published port and checks the expected nginx page. It does not merely check that a container exists.
+After editing Compose settings, rerun `up`. For a mounted configuration edit, use the application's supported reload or recreate the service:
+
+```bash
+docker compose -p devopslab012 -f .lab-state/012/compose.json up -d --force-recreate
+```
+
+Cold image downloads can take time. Establish registry access before interpreting failures. Linux cases 005 and 006 reproduce actual file-permission and port-conflict failures inside containers, leaving the host unchanged. Case 049 uses Redis as its actual database dependency rather than the generic database in the supplied evidence.
 
 ## Kubernetes
 
-Use a dedicated local kind cluster. Install current compatible Docker, kind, and kubectl versions using their official documentation. Allow several GiB of memory and enough disk space for the node and images; actual requirements depend on your system. Run one lab at a time on a small machine.
+Use only a dedicated local kind cluster. Install compatible Docker, kind, and kubectl versions using their official instructions. Allow several GiB of memory and sufficient disk for the node and images; run one lab at a time on a small machine.
 
 ```bash
 kind create cluster --name devops-labs --wait 120s
@@ -41,39 +53,57 @@ kubectl --context kind-devops-labs -n devops-lab-027 get pods,svc
 python3 lab.py check 027
 ```
 
-The CLI explicitly targets `kind-devops-labs` and checks expected node names. It never chooses your current kubectl context implicitly. Use this only with the dedicated local kind cluster. Each lab owns one labelled namespace. Checks require the expected Deployment to be available and usually make a real HTTP request through its Service. Case 023 checks its required configuration; 056 also checks volume writes.
+The CLI explicitly selects `kind-devops-labs`, requires kind node provider IDs and expected node names, and checks namespace ownership before modifying an existing namespace. It does not use your current context implicitly. This is an accident-prevention boundary for a local practice environment, not a security sandbox against a hostile cluster administrator.
 
-Pod startup and image downloads take time. Inspect the events rather than interpreting every early failure as the intended fault. After repair, wait for readiness before grading:
+Each case owns one labelled namespace. Compound namespace suffixes are lowercase, for example `devops-lab-m01`. The checker requires the expected Deployment(s) to be available and usually sends traffic through the Service.
 
 ```bash
 kubectl --context kind-devops-labs -n devops-lab-027 rollout status deployment/web --timeout=120s
 python3 lab.py check 027
 ```
 
-Case 056 requires kind's `standard` StorageClass. Check `kubectl --context kind-devops-labs get storageclass`. Its repair replaces only the unbound disposable lab claim because storageClassName cannot be changed in place.
+Special cases:
 
-## Reset and cleanup
+- 023: checks the required mounted startup configuration.
+- 054: checks DNS resolution from the affected workload as well as the Service request path.
+- 056: writes and reads a marker in the mounted volume. Requires kind's `standard` StorageClass. The repair replaces only its disposable unbound claim because storageClassName cannot be changed in place.
+- 080: reproduces quota admission failure using a BestEffort pod quota; the evidence drill uses CPU quota. The common investigation is admission rejection during recovery.
+- 081: requires both Deployments and probes every ready Service endpoint, preventing one healthy replica from masking an incompatible endpoint.
+
+## Stronger recovery checks
 
 ```bash
-python3 lab.py down 027
-# Wait for namespace deletion before recreating the same Kubernetes lab.
-python3 lab.py up 027
+python3 lab.py check 081 --samples 5 --interval 1
 ```
 
-- Git cleanup deletes only the selected lab repository.
-- Docker cleanup removes only the selected Compose project and its workspace.
-- Kubernetes cleanup requests deletion of the selected labelled namespace, including its disposable claims. Persistent-volume cleanup also depends on its StorageClass reclaim policy.
-- Kubernetes `up` reapplies the broken workload but does not remove auxiliary resources from an earlier repair. Use `down`, wait for namespace deletion, then `up` for a full reset.
-- Practice scores in `.practice/` survive lab cleanup.
+Defaults are three checks one second apart. `--samples` accepts 1–10; `--interval` accepts 0–10 seconds. The check rejects changes in container identity, start time, or restart count during the observation window. Kubernetes observes pod identities and restart counts in its lab namespace. Wait for an intended rollout to settle before grading.
 
-After all Kubernetes labs are finished:
+Docker 033 checks both the real Prometheus `up` result and a known scraped metric. Docker 049 performs an actual Redis write/read round trip on each application request. Volume and database checks use disposable training data; they do not certify all data integrity or prove durability across infrastructure loss. The local observation window is short and does not replace production monitoring.
+
+## One-command reset and cleanup
+
+```bash
+python3 lab.py reset 027
+python3 lab.py down 027
+```
+
+Reset removes the selected lab, waits for Kubernetes namespace deletion when needed, and recreates the original broken state. It does not reset practice history. In a session it also preserves the original timer, hints, and reveal status.
+
+- Git cleanup deletes only its disposable lab repository and baseline metadata.
+- Docker cleanup removes its Compose project, project volumes, and workspace.
+- Kubernetes cleanup requests deletion of its labelled namespace, including disposable claims. Volume reclamation follows the StorageClass policy.
+- Kubernetes `up` alone reapplies the broken specification but may retain auxiliary repair resources. Use `reset` for a clean start.
+- If namespace deletion exceeds the reset wait, inspect termination and retry after it finishes.
+- `.practice/` history survives cleanup. Sessions do not remove resources automatically when time expires or when you finish.
+
+After all Kubernetes practice:
 
 ```bash
 kind delete cluster --name devops-labs
 ```
 
-## Solutions and limits
+## Solutions and verification in CI
 
-Each runnable folder has a separate `solution.md` and reference repair. Opening the fixed manifest reveals the fault. In hard mode, use only live inspection until you have written your diagnosis.
+Each native folder includes a separate `solution.md` and reference repair. Opening the fixed configuration reveals the fault. In hard mode, inspect live state first.
 
-These are intentionally small fault reproductions. A passing grader validates the listed local behavior; production recovery also requires impact checks, dependency health, data integrity, and an observation window. Do not run these faults in shared or production environments.
+CI verifies original faults, successful repairs, repeated checks, reset back to a broken state, and cleanup. For compound incidents it additionally applies an incomplete repair and verifies that recovery still fails. Cloud cases remain synthetic evidence drills; these tests do not execute real cloud incidents.

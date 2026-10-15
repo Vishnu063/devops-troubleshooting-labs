@@ -1,0 +1,19 @@
+{
+  "services": {
+    "web": {
+      "image": "python:3.12-alpine",
+      "user": "1000:1000",
+      "ports": [
+        "127.0.0.1::8080"
+      ],
+      "volumes": [
+        "./assets/app.py:/app.py:ro"
+      ],
+      "command": [
+        "sh",
+        "-c",
+        "mkdir -p /tmp/lab-private; echo permissions-recovered > /tmp/lab-private/message; chmod 700 /tmp/lab-private; exec python /app.py"
+      ]
+    }
+  }
+}

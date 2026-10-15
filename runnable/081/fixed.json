@@ -1,0 +1,151 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "web",
+        "namespace": "devops-lab-081"
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "app": "web"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "web",
+              "serving": "orders"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "web",
+                "image": "nginx:1.28-alpine",
+                "ports": [
+                  {
+                    "containerPort": 80,
+                    "name": "http"
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "10m",
+                    "memory": "16Mi"
+                  },
+                  "limits": {
+                    "cpu": "200m",
+                    "memory": "128Mi"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "web",
+        "namespace": "devops-lab-081"
+      },
+      "spec": {
+        "selector": {
+          "serving": "orders"
+        },
+        "ports": [
+          {
+            "port": 80,
+            "targetPort": "http"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": "client",
+        "namespace": "devops-lab-081"
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "client",
+            "image": "busybox:1.37",
+            "command": [
+              "sh",
+              "-c",
+              "sleep 86400"
+            ],
+            "resources": {
+              "requests": {
+                "cpu": "5m",
+                "memory": "8Mi"
+              },
+              "limits": {
+                "memory": "32Mi"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "legacy",
+        "namespace": "devops-lab-081"
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "app": "legacy"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "legacy",
+              "serving": "orders"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "web",
+                "image": "nginx:1.28-alpine",
+                "ports": [
+                  {
+                    "containerPort": 80,
+                    "name": "http"
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "10m",
+                    "memory": "16Mi"
+                  },
+                  "limits": {
+                    "cpu": "200m",
+                    "memory": "128Mi"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

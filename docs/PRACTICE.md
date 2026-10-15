@@ -41,3 +41,9 @@ The catalog title reveals a symptom. Supplied evidence may strongly narrow the c
 ## Explain your experience honestly
 
 Use “I reproduced and resolved this in a lab” for practice work. Distinguish it from an incident you personally handled at work. Terraform cases can demonstrate project knowledge without implying production Terraform experience.
+
+## CLI sessions and repeatable faults
+
+Use [timed hidden sessions](SESSIONS.md) for a symptom-first brief, hint tracking, optional level gates, and recorded elapsed time. Use `python3 lab.py reset ID` to repeat a native fault. [Compound incidents](../COMPOUNDS.md) add two independent failures outside the final 100.
+
+A hidden session hides the catalog title, not the local source files or resource identifiers. Root-cause reasoning and interview scores remain self-assessed. Native recovery is checked behaviorally.

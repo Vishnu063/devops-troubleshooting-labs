@@ -1,0 +1,15 @@
+{
+  "services": {
+    "web": {
+      "image": "python:3.12-alpine",
+      "ports": [
+        "127.0.0.1::8080"
+      ],
+      "command": [
+        "sh",
+        "-c",
+        "python -m http.server 8080 & sleep 1; exec python -m http.server 8080"
+      ]
+    }
+  }
+}

@@ -1,14 +1,23 @@
 # DevOps Troubleshooting Labs
 
-**100 incidents. Three difficulty levels. Diagnose first. Prove the recovery.**
+**100 scenarios. Three difficulty levels. Real faults, hidden incidents, and proof of recovery.**
 
-Practice the failures DevOps engineers investigate across Linux, networking, Git, CI/CD, Docker, Kubernetes, AWS, Azure, GCP, Terraform, GitOps, security, and observability.
+[All 100 scenarios](CATALOG.md) · [Compound incidents](COMPOUNDS.md) · [Local lab setup](docs/LABS.md) · [Timed sessions](docs/SESSIONS.md) · [Practice method](docs/PRACTICE.md)
 
-[Browse all 100 cases](CATALOG.md) · [Start practicing](docs/PRACTICE.md) · [Run a local fault](docs/LABS.md) · [Track progress](PROGRESS.md)
+## Pick your practice
+
+| Mode | Available now | What you do |
+| --- | --- | --- |
+| Evidence investigations | All 100 scenarios | Interpret synthetic evidence and defend your recovery plan |
+| Runnable scenarios | **24 of the 100** | Repair actual isolated Git, Docker, or Kubernetes failures |
+| Compound incidents | **3 additional runnable labs** | Diagnose two independent faults; one repair is insufficient |
+| Hidden timed sessions | All cases and compounds | Start from symptoms, track time and hints, record the result |
+
+The final 100 IDs and Level 1/2/3 boundaries remain unchanged. **76 scenarios are evidence-only.** Cloud cases do not provision resources. Local faults reproduce a specific failure class rather than an entire production platform.
 
 ## Start in one minute
 
-Requires Python 3.10+ and Git. The evidence drills need no Python packages, Docker, or cloud account.
+Requires Git and Python 3.10+. Evidence drills need no Python packages, Docker, or cloud account.
 
 ```bash
 git clone https://github.com/Vishnu063/devops-troubleshooting-labs.git
@@ -18,78 +27,95 @@ python3 lab.py show 023
 python3 lab.py evidence 023
 ```
 
-Write your diagnosis and recovery plan before opening hints or solutions.
+Investigate first. Hints and solutions are separate:
 
 ```bash
 python3 lab.py hint 023 --step 1
-python3 lab.py hint 023 --step 2
 python3 lab.py solution 023
-python3 lab.py record 023 --score 7 --minutes 20 --hints 2
-python3 lab.py progress
 ```
 
-## Choose your challenge
-
-| Level | Cases | Focus | Suggested time |
-| --- | --- | --- | --- |
-| 1 | 001–034 | Find the failing component and repair the immediate fault | 20 minutes |
-| 2 | 035–067 | Correlate symptoms across deployments and dependencies | 35 minutes |
-| 3 | 068–100 | Protect availability and data during complex recovery | 50 minutes |
-
-Difficulty is a training guide. Real incidents can cross these boundaries.
+## Ready for a challenge?
 
 ```bash
-python3 lab.py random --level 3
-python3 lab.py list --tool Kubernetes
-python3 lab.py list --runnable
+python3 lab.py session start --hidden --runnable --level 1
+python3 lab.py session up
+python3 lab.py session status
+python3 lab.py session check
+python3 lab.py session finish --score 8
 ```
 
-**Make it harder:** set a timer, avoid hints, rank three hypotheses, explain what would disprove each, and give a 60-second incident update. The investigation should be difficult; finding the instructions should be easy.
+Docker or Kubernetes prerequisites depend on the randomly chosen runtime. Add `--tool Git` for a no-Docker session. Hidden briefs omit the title and case ID; inspection paths and source files remain readable. The timer includes setup time and does not remove resources automatically. See [session rules and limits](docs/SESSIONS.md).
 
-## What you can practice today
+## Levels and prerequisites
 
-- **100 supplied-evidence drills:** incident brief, concrete training observations, progressive hints, diagnosis, recovery guidance, verification, and prevention.
-- **15 runnable local labs:** 2 Git, 3 Docker, and 10 Kubernetes faults, each with a recovery grader and cleanup.
-- **Interview practice:** explain commands, tradeoffs, rollback, and user impact; use the [10-point rubric](docs/PRACTICE.md).
-- **Local history:** record repeated attempts, elapsed time, hints, and self-assessed scores.
-- **Contribution workflow:** issue templates, contribution guidance, and automated repository and native lab checks.
+| Level | Cases | Investigation focus | Target |
+| --- | --- | --- | --- |
+| 1 | 001–034 | Identify the immediate failure and repair it | 20 min |
+| 2 | 035–067 | Correlate deployment and dependency problems | 35 min |
+| 3 | 068–100 | Recover while protecting availability and data | 50 min |
+| Compound | M01–M03 | Diagnose multiple independent failures | 60 min |
 
-Evidence drills are synthetic case studies, not interactive cloud deployments. Native labs reproduce a specific fault; they are not complete replicas of a production platform. Each case is clearly labelled in the catalog. Cloud provisioning is not included.
+| Runtime | Required tools | Runnable scenarios |
+| --- | --- | --- |
+| Git | Git + Python | 013, 040 |
+| Docker | Docker Engine + Compose v2 + Python | 005, 006, 010, 012, 019, 020, 021, 033, 049 |
+| Kubernetes | Docker + kind + kubectl + Python | 023–027, 050–052, 054, 056, 057, 080, 081; plus M01–M03 |
 
-## Run your first actual fault
+Registry access is required for image downloads. Kubernetes labs use only the dedicated local `kind-devops-labs` context. No command provisions paid cloud services.
 
-No Docker required for this Git exercise:
+## Run, verify, reset
 
 ```bash
 python3 lab.py up 013
-# Investigate the disposable repository at .lab-state/013/repo.
+# Investigate .lab-state/013/repo and resolve the merge.
 python3 lab.py check 013
-# Resolve and commit the merge, preserving both intended changes.
-python3 lab.py check 013
+python3 lab.py reset 013
 python3 lab.py down 013
 ```
 
-The first check should fail. For Docker and Kubernetes prerequisites and exact isolation boundaries, read [local lab setup](docs/LABS.md). Nothing provisions paid cloud services.
+A check should fail in the original broken state. Networked checks make repeated requests and reject restarts or container replacement during the observation window. Special checks cover monitoring scrape results, a database write/read round trip, persistent-volume writes, workload DNS, and every ready endpoint in the mixed-version incident.
+
+```bash
+python3 lab.py check 081 --samples 5 --interval 1
+python3 lab.py list --runnable
+python3 lab.py list --compound
+python3 lab.py random --level 3
+```
+
+Short local checks do not replace a production stability window or full data-integrity validation.
+
+## Build a practice record
+
+```bash
+python3 lab.py progress
+python3 lab.py session path
+python3 lab.py session start --level 2 --unlock --hidden
+```
+
+Optional unlocking requires three qualifying distinct completions at the previous level. Native sessions must pass their recovery check; all explanation scores are self-assessed. Omit `--unlock` for unrestricted practice. Use the [incident report template](templates/incident-report.md) to document your reasoning.
 
 ## Coverage
 
-| Area | Tools and services |
+| Area | Technologies |
 | --- | --- |
-| Systems and traffic | Linux, SSH, DNS, TLS, Nginx, network routing |
-| Source and delivery | Git, Jenkins, GitHub Actions, GitLab CI, Azure DevOps |
+| Systems and traffic | Linux, SSH, DNS, TLS, Nginx, routing |
+| Delivery | Git, Jenkins, GitHub Actions, GitLab CI, Azure DevOps |
 | Containers and GitOps | Docker, Kubernetes, Helm, Argo CD |
 | Infrastructure | Terraform, Ansible |
 | AWS | EC2, VPC, ALB, Auto Scaling, S3, IAM, RDS, Route 53, Lambda, EKS, Secrets Manager |
-| Azure and GCP | AKS, ACR, Key Vault, GKE, Cloud Build, Artifact Registry, workload identities |
-| Security and operations | Trivy, Snyk, SonarQube, Prometheus, Grafana, Alertmanager, ELK, Loki, incident response, disaster recovery |
+| Azure and GCP | AKS, ACR, Key Vault, GKE, Cloud Build, Artifact Registry, workload identity |
+| Security and operations | Trivy, Snyk, SonarQube, Prometheus, Grafana, Alertmanager, ELK, Loki, incident response, recovery |
 
-## Contribute
+## Contribute and validate
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md). The [catalog](data/incidents.json) is the source of truth; regenerate casebooks with `python3 scripts/build_docs.py`.
+The [catalog](data/incidents.json) and [runtime registry](data/runtimes.json) are the source of truth. Read [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ```bash
+python3 scripts/build_docs.py
 python3 -m unittest discover -s tests -v
 python3 scripts/validate.py
 ```
+
+CI checks repository integrity, original faults, incomplete compound repairs, repeated recovery checks, reset, and cleanup on disposable environments.
 
 [Security reporting](SECURITY.md) · [MIT license](LICENSE)

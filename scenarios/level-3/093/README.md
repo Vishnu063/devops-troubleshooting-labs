@@ -18,6 +18,8 @@ You are on call. Investigate this incident, restore the intended behavior, and e
 
 ## Practice modes
 
+Start a timed hidden session with `python3 lab.py session start --hidden --level 3`. [Session commands](../../../docs/SESSIONS.md).
+
 - Guided: use the [three progressive hints](hints.md).
 - Interview: explain your approach aloud before opening evidence.
 - Hard: use a timer, no hints, and state evidence that would disprove your diagnosis.

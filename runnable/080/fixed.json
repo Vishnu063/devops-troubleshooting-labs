@@ -1,0 +1,107 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "ResourceQuota",
+      "metadata": {
+        "name": "best-effort-budget",
+        "namespace": "devops-lab-080"
+      },
+      "spec": {
+        "scopes": [
+          "BestEffort"
+        ],
+        "hard": {
+          "pods": "2"
+        }
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "web",
+        "namespace": "devops-lab-080"
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "app": "web"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "web"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "web",
+                "image": "nginx:1.28-alpine",
+                "ports": [
+                  {
+                    "containerPort": 80
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "web",
+        "namespace": "devops-lab-080"
+      },
+      "spec": {
+        "selector": {
+          "app": "web"
+        },
+        "ports": [
+          {
+            "port": 80,
+            "targetPort": 80
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": "client",
+        "namespace": "devops-lab-080"
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "client",
+            "image": "busybox:1.37",
+            "command": [
+              "sh",
+              "-c",
+              "sleep 86400"
+            ],
+            "resources": {
+              "requests": {
+                "cpu": "5m",
+                "memory": "8Mi"
+              },
+              "limits": {
+                "memory": "32Mi"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

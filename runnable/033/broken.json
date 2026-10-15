@@ -1,0 +1,26 @@
+{
+  "services": {
+    "web": {
+      "image": "prom/prometheus:v3.2.1",
+      "ports": [
+        "127.0.0.1::9090"
+      ],
+      "volumes": [
+        "./assets/prometheus.yml:/etc/prometheus/prometheus.yml:ro"
+      ],
+      "depends_on": [
+        "metrics"
+      ]
+    },
+    "metrics": {
+      "image": "python:3.12-alpine",
+      "command": [
+        "python",
+        "/app.py"
+      ],
+      "volumes": [
+        "./assets/metrics.py:/app.py:ro"
+      ]
+    }
+  }
+}

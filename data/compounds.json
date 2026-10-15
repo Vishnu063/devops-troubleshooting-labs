@@ -1,0 +1,38 @@
+[
+  {
+    "id": "M01",
+    "title": "Checkout unavailable",
+    "level": 3,
+    "minutes": 60,
+    "tool": "Kubernetes",
+    "symptom": "Checkout requests fail following a release.",
+    "related": [
+      "024",
+      "027"
+    ]
+  },
+  {
+    "id": "M02",
+    "title": "Unstable order worker",
+    "level": 3,
+    "minutes": 60,
+    "tool": "Kubernetes",
+    "symptom": "The order worker never reaches stable serving capacity.",
+    "related": [
+      "025",
+      "051"
+    ]
+  },
+  {
+    "id": "M03",
+    "title": "Intermittent release outage",
+    "level": 3,
+    "minutes": 60,
+    "tool": "Kubernetes",
+    "symptom": "New release instances fail and the application is inaccessible.",
+    "related": [
+      "050",
+      "027"
+    ]
+  }
+]

@@ -1,0 +1,107 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "web",
+        "namespace": "devops-lab-m03"
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "app": "web"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "web"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "web",
+                "image": "python:3.12-alpine",
+                "ports": [
+                  {
+                    "containerPort": 80
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "10m",
+                    "memory": "16Mi"
+                  },
+                  "limits": {
+                    "cpu": "200m",
+                    "memory": "128Mi"
+                  }
+                },
+                "command": [
+                  "python",
+                  "-u",
+                  "-c",
+                  "import http.server; memory=bytearray(64*1024*1024); http.server.HTTPServer(('0.0.0.0',80),http.server.SimpleHTTPRequestHandler).serve_forever()"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "web",
+        "namespace": "devops-lab-m03"
+      },
+      "spec": {
+        "selector": {
+          "app": "web"
+        },
+        "ports": [
+          {
+            "port": 80,
+            "targetPort": 80
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": "client",
+        "namespace": "devops-lab-m03"
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "client",
+            "image": "busybox:1.37",
+            "command": [
+              "sh",
+              "-c",
+              "sleep 86400"
+            ],
+            "resources": {
+              "requests": {
+                "cpu": "5m",
+                "memory": "8Mi"
+              },
+              "limits": {
+                "memory": "32Mi"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

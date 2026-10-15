@@ -23,7 +23,7 @@ class PracticeTests(unittest.TestCase):
             _,output=self.cli('list','--level',str(level))
             self.assertEqual(len(output.splitlines()),count)
         _,output=self.cli('list','--runnable')
-        self.assertEqual(len(output.splitlines()),15)
+        self.assertEqual(len(output.splitlines()),24)
         _,output=self.cli('list','--tool','kubernetes')
         self.assertIn('023',output);self.assertNotIn('Jenkins',output)
 
@@ -74,6 +74,6 @@ class PracticeTests(unittest.TestCase):
             broken=json.loads((folder/'broken.json').read_text());fixed=json.loads((folder/'fixed.json').read_text())
             self.assertNotEqual(broken,fixed)
             for obj in broken['items']+fixed['items']:
-                self.assertEqual(obj['metadata']['namespace'],'devops-lab-'+i)
+                self.assertEqual(obj['metadata']['namespace'],'devops-lab-'+i.lower())
 
 if __name__=='__main__':unittest.main()

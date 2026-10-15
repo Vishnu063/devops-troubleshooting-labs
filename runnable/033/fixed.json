@@ -1,0 +1,33 @@
+{
+  "services": {
+    "web": {
+      "image": "prom/prometheus:v3.2.1",
+      "ports": [
+        "127.0.0.1::9090"
+      ],
+      "volumes": [
+        "./assets/prometheus.yml:/etc/prometheus/prometheus.yml:ro"
+      ],
+      "depends_on": [
+        "metrics"
+      ],
+      "entrypoint": [
+        "/bin/sh",
+        "-c"
+      ],
+      "command": [
+        "sed s/metrics:9091/metrics:9100/ /etc/prometheus/prometheus.yml > /tmp/fixed.yml; exec /bin/prometheus --config.file=/tmp/fixed.yml --storage.tsdb.path=/prometheus"
+      ]
+    },
+    "metrics": {
+      "image": "python:3.12-alpine",
+      "command": [
+        "python",
+        "/app.py"
+      ],
+      "volumes": [
+        "./assets/metrics.py:/app.py:ro"
+      ]
+    }
+  }
+}

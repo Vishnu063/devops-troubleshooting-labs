@@ -1,6 +1,6 @@
 # 054 · Kubernetes: Internal DNS failure
 
-Level 2 · 35 minute target · Evidence drill
+Level 2 · 35 minute target · Runnable kubernetes lab + evidence drill
 
 [Catalog](../../../CATALOG.md) · [Practice guide](../../../docs/PRACTICE.md)
 
@@ -18,14 +18,28 @@ You are on call. Investigate this incident, restore the intended behavior, and e
 
 ## Practice modes
 
+Start a timed hidden session with `python3 lab.py session start --hidden --level 2`. [Session commands](../../../docs/SESSIONS.md).
+
 - Guided: use the [three progressive hints](hints.md).
 - Interview: explain your approach aloud before opening evidence.
 - Hard: use a timer, no hints, and state evidence that would disprove your diagnosis.
 - Incident commander: give a 60-second update and a recovery decision before proposing a fix.
 
-## Evidence drill
+## Run the fault locally
 
-Use the supplied snapshot as an incident investigation. No infrastructure is created. Write commands you would run in an authorized environment; do not execute production changes as part of this exercise.
+Prerequisites and isolation: [lab setup](../../../docs/LABS.md).
+
+```bash
+python3 lab.py up 054
+python3 lab.py check 054
+# Investigate and repair the workspace printed by up.
+python3 lab.py check 054
+python3 lab.py down 054
+# Repeat from the original broken state:
+python3 lab.py reset 054
+```
+
+The initial check should fail. Read the native lab's instructions at [runnable/054](../../../runnable/054/README.md).
 
 ## Finish
 

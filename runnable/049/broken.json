@@ -1,0 +1,26 @@
+{
+  "services": {
+    "web": {
+      "image": "python:3.12-alpine",
+      "ports": [
+        "127.0.0.1::8080"
+      ],
+      "command": [
+        "python",
+        "/app.py"
+      ],
+      "environment": {
+        "DB_HOST": "localhost"
+      },
+      "volumes": [
+        "./assets/app.py:/app.py:ro"
+      ],
+      "depends_on": [
+        "database"
+      ]
+    },
+    "database": {
+      "image": "redis:7-alpine"
+    }
+  }
+}
