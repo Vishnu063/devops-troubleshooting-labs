@@ -1,0 +1,18 @@
+{
+  "services": {
+    "web": {
+      "image": "nginx:1.28-alpine",
+      "ports": [
+        "127.0.0.1::80"
+      ],
+      "command": [
+        "sh",
+        "-c",
+        "test \"$$APP_MODE\" = production || { echo \"required variable APP_MODE missing\"; exit 1; }; exec nginx -g \"daemon off;\""
+      ],
+      "environment": {
+        "APP_MODE": "production"
+      }
+    }
+  }
+}

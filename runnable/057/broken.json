@@ -1,0 +1,102 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "web",
+        "namespace": "devops-lab-057"
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "app": "web"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "web"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "web",
+                "image": "busybox:does-not-exist-lab",
+                "ports": [
+                  {
+                    "containerPort": 80
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "10m",
+                    "memory": "16Mi"
+                  },
+                  "limits": {
+                    "cpu": "200m",
+                    "memory": "128Mi"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "progressDeadlineSeconds": 20
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "web",
+        "namespace": "devops-lab-057"
+      },
+      "spec": {
+        "selector": {
+          "app": "web"
+        },
+        "ports": [
+          {
+            "port": 80,
+            "targetPort": 80
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "name": "client",
+        "namespace": "devops-lab-057"
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "client",
+            "image": "busybox:1.37",
+            "command": [
+              "sh",
+              "-c",
+              "sleep 86400"
+            ],
+            "resources": {
+              "requests": {
+                "cpu": "5m",
+                "memory": "8Mi"
+              },
+              "limits": {
+                "memory": "32Mi"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+name: Validate drills and runnable labs
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: labs-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  repository:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 -m unittest discover -s tests -v
+      - run: python3 scripts/validate.py
+      - name: Generated casebooks stay in sync
+        run: |
+          python3 scripts/build_docs.py
+          git diff --exit-code
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        id: ['019', '020', '021']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 scripts/ci_native.py docker --id ${{ matrix.id }}
+  kubernetes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned kind binary
+        run: |
+          curl -fsSLo kind https://kind.sigs.k8s.io/dl/v0.27.0/kind-linux-amd64
+          chmod +x kind
+          sudo mv kind /usr/local/bin/kind
+      - name: Create disposable cluster
+        run: kind create cluster --name devops-labs --wait 120s
+      - name: Verify faults and repairs
+        run: python3 scripts/ci_native.py kubernetes
+      - name: Delete disposable cluster
+        if: always()
+        run: kind delete cluster --name devops-labs

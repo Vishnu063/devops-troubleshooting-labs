@@ -1,0 +1,104 @@
+# Practice checklist
+
+Copy this file into your own notes or track attempts with `python3 lab.py record`. Checking a box is self-assessment, not proof of a lab repair.
+
+- [ ] 001 — Linux: Service stopped
+- [ ] 002 — Linux: High CPU
+- [ ] 003 — Linux: Out of memory
+- [ ] 004 — Linux: Disk full
+- [ ] 005 — Linux: File permissions
+- [ ] 006 — Linux: Port occupied
+- [ ] 007 — Linux: Cron environment
+- [ ] 008 — SSH: Cannot connect
+- [ ] 009 — DNS: IP works, hostname fails
+- [ ] 010 — Networking: Local only
+- [ ] 011 — TLS: Certificate expired
+- [ ] 012 — Nginx: Bad gateway
+- [ ] 013 — Git: Merge conflict
+- [ ] 014 — Git: Private clone fails
+- [ ] 015 — Jenkins: Tool missing
+- [ ] 016 — Jenkins: Job queued
+- [ ] 017 — Jenkins: Docker denied
+- [ ] 018 — GitHub Actions: No trigger
+- [ ] 019 — Docker: Immediate exit
+- [ ] 020 — Docker: Published port fails
+- [ ] 021 — Docker: Mounted files unreadable
+- [ ] 022 — Registry: Authentication error
+- [ ] 023 — Kubernetes: CrashLoopBackOff
+- [ ] 024 — Kubernetes: ImagePullBackOff
+- [ ] 025 — Kubernetes: Pending pod
+- [ ] 026 — Kubernetes: Missing configuration
+- [ ] 027 — Kubernetes: Service selector mismatch
+- [ ] 028 — AWS EC2: Security group blocks app
+- [ ] 029 — AWS S3: Access denied
+- [ ] 030 — AWS ALB: Unhealthy target
+- [ ] 031 — Terraform: Init backend failure
+- [ ] 032 — Ansible: Host unreachable
+- [ ] 033 — Prometheus: Target down
+- [ ] 034 — Grafana: No data
+- [ ] 035 — Linux: Deleted files retain space
+- [ ] 036 — Linux: Inodes exhausted
+- [ ] 037 — Linux: Slow with normal CPU
+- [ ] 038 — Networking: Intermittent connection failure
+- [ ] 039 — Nginx: Peak-time timeout
+- [ ] 040 — Git: Faulty production commit
+- [ ] 041 — Jenkins: Agent inconsistency
+- [ ] 042 — Jenkins: Upgrade regression
+- [ ] 043 — GitHub Actions: AWS federation denied
+- [ ] 044 — GitLab CI: Runner mismatch
+- [ ] 045 — Azure DevOps: Service connection denied
+- [ ] 046 — CI/CD: Wrong artifact deployed
+- [ ] 047 — CI/CD: Partial deployment
+- [ ] 048 — Docker: Local works, server fails
+- [ ] 049 — Docker: Database unreachable
+- [ ] 050 — Kubernetes: OOMKilled
+- [ ] 051 — Kubernetes: Readiness failure
+- [ ] 052 — Kubernetes: Liveness restarts
+- [ ] 053 — Kubernetes: Ingress routing failure
+- [ ] 054 — Kubernetes: Internal DNS failure
+- [ ] 055 — Kubernetes: NetworkPolicy blocked traffic
+- [ ] 056 — Kubernetes: PVC pending
+- [ ] 057 — Kubernetes: Stalled rollout
+- [ ] 058 — Kubernetes: Node NotReady
+- [ ] 059 — Kubernetes: HPA not scaling
+- [ ] 060 — Helm: Invalid upgrade values
+- [ ] 061 — Argo CD: Sync failure
+- [ ] 062 — Terraform: State locked
+- [ ] 063 — Terraform: Infrastructure drift
+- [ ] 064 — Ansible: Non-idempotent playbook
+- [ ] 065 — AWS VPC: Private subnet egress fails
+- [ ] 066 — AWS RDS: Connections exhausted
+- [ ] 067 — AWS Secrets Manager: Rotation failure
+- [ ] 068 — CI/CD: Concurrent deployments
+- [ ] 069 — CI/CD: Schema rollback incompatible
+- [ ] 070 — Deployment: Rolling update downtime
+- [ ] 071 — Deployment: Canary errors
+- [ ] 072 — Deployment: Blue-green session failure
+- [ ] 073 — Security: Exposed AWS credentials
+- [ ] 074 — DevSecOps: Critical vulnerability
+- [ ] 075 — SonarQube: Hotfix gate fails
+- [ ] 076 — Kubernetes: Autoscaler cannot expand
+- [ ] 077 — Kubernetes: Drain blocked
+- [ ] 078 — Kubernetes: Volume attach conflict
+- [ ] 079 — Kubernetes: Removed API after upgrade
+- [ ] 080 — Kubernetes: Quota blocks recovery
+- [ ] 081 — Kubernetes: Healthy pods, intermittent failure
+- [ ] 082 — Argo CD: Emergency fix reverted
+- [ ] 083 — Terraform: Database replacement proposed
+- [ ] 084 — Terraform: Partial apply inconsistent
+- [ ] 085 — Terraform: Provider upgrade changes plan
+- [ ] 086 — AWS EKS: Workload identity denied
+- [ ] 087 — AWS Auto Scaling: More nodes, still slow
+- [ ] 088 — AWS: Availability Zone failure
+- [ ] 089 — AWS RDS: Failover reconnection fails
+- [ ] 090 — AWS Route 53: Cutover inconsistent
+- [ ] 091 — AWS Lambda: Private database timeout
+- [ ] 092 — Azure AKS: Upgrade stalled
+- [ ] 093 — Azure ACR: Image pulls denied
+- [ ] 094 — Azure Key Vault: Secret access lost
+- [ ] 095 — GCP GKE: Cloud access denied
+- [ ] 096 — GCP Cloud Build: Publish denied
+- [ ] 097 — Monitoring: Alert never delivered
+- [ ] 098 — ELK / Loki: Logs disappear
+- [ ] 099 — Incident response: Shared dependency failure
+- [ ] 100 — Disaster recovery: Restore misses target

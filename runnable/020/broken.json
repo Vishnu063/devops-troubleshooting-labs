@@ -1,0 +1,10 @@
+{
+  "services": {
+    "web": {
+      "image": "nginx:1.28-alpine",
+      "ports": [
+        "127.0.0.1::8080"
+      ]
+    }
+  }
+}
