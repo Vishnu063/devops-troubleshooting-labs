@@ -43,7 +43,8 @@
                   }
                 }
               }
-            ]
+            ],
+            "terminationGracePeriodSeconds": 2
           }
         }
       }
@@ -94,7 +95,8 @@
               }
             }
           }
-        ]
+        ],
+        "terminationGracePeriodSeconds": 1
       }
     }
   ]

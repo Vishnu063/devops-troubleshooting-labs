@@ -93,5 +93,11 @@ def main():
                 subprocess.run(['kubectl','--context','kind-devops-labs','-n','devops-lab-'+i.lower(),'wait','--for=condition=Ready','pod/client','--timeout=120s'],check=True)
             wait_until(lambda:fault_observed(i),120);cli('check',i,expected=1)
             print(f'PASS {i}: fault, repaired behavior, stability, and reset verified',flush=True)
+        except Exception:
+            if i in native.DOCKER:
+                native.compose(i,'ps','--all',ok=False);native.compose(i,'logs','--tail','100',ok=False)
+            else:
+                native.kube(i,'get','pods','-o','wide',ok=False);native.kube(i,'get','events','--sort-by=.metadata.creationTimestamp',ok=False)
+            raise
         finally:cli('down',i)
 if __name__=='__main__':main()

@@ -43,7 +43,8 @@
                   }
                 }
               }
-            ]
+            ],
+            "terminationGracePeriodSeconds": 2
           }
         },
         "progressDeadlineSeconds": 20
@@ -95,7 +96,8 @@
               }
             }
           }
-        ]
+        ],
+        "terminationGracePeriodSeconds": 1
       }
     }
   ]

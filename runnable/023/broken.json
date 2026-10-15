@@ -48,7 +48,8 @@
                   "cat /config/app.conf || exit 1; sleep 86400"
                 ]
               }
-            ]
+            ],
+            "terminationGracePeriodSeconds": 2
           }
         }
       }
@@ -99,7 +100,8 @@
               }
             }
           }
-        ]
+        ],
+        "terminationGracePeriodSeconds": 1
       }
     }
   ]

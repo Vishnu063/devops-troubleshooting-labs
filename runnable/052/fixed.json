@@ -65,7 +65,8 @@
                   "failureThreshold": 30
                 }
               }
-            ]
+            ],
+            "terminationGracePeriodSeconds": 2
           }
         }
       }
@@ -116,7 +117,8 @@
               }
             }
           }
-        ]
+        ],
+        "terminationGracePeriodSeconds": 1
       }
     }
   ]

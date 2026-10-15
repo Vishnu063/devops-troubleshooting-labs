@@ -55,6 +55,8 @@ python3 lab.py check 027
 
 The CLI explicitly selects `kind-devops-labs`, requires kind node provider IDs and expected node names, and checks namespace ownership before modifying an existing namespace. It does not use your current context implicitly. This is an accident-prevention boundary for a local practice environment, not a security sandbox against a hostile cluster administrator.
 
+Disposable lab workloads use short termination grace periods to make reset quick. These settings are for training, not a production termination-policy recommendation.
+
 Each case owns one labelled namespace. Compound namespace suffixes are lowercase, for example `devops-lab-m01`. The checker requires the expected Deployment(s) to be available and usually sends traffic through the Service.
 
 ```bash

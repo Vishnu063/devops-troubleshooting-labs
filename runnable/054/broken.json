@@ -59,7 +59,8 @@
                   "value": "1"
                 }
               ]
-            }
+            },
+            "terminationGracePeriodSeconds": 2
           }
         }
       }
@@ -110,7 +111,8 @@
               }
             }
           }
-        ]
+        ],
+        "terminationGracePeriodSeconds": 1
       }
     }
   ]
