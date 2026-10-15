@@ -69,10 +69,10 @@ def check_docker(i):
     base=f"http://127.0.0.1:{ports[0]['HostPort']}"
     try:
         if i=='033':
-            for query in ['up{job="lab"}','lab_requests_total{job="lab"}']:
+            for query in ['up{job="lab",instance="metrics:9100"}','lab_requests_total{job="lab",instance="metrics:9100"}']:
                 status,body=fetch(base+'/api/v1/query?'+urllib.parse.urlencode({'query':query}))
                 result=json.loads(body).get('data',{}).get('result',[])
-                if status!=200 or not result or float(result[0]['value'][1])!=(1 if query.startswith('up') else 42):return False
+                if status!=200 or len(result)!=1 or float(result[0]['value'][1])!=(1 if query.startswith('up') else 42):return False
             return True
         status,body=fetch(base+'/')
         expected={'005':b'permissions-recovered','006':b'Directory listing','010':b'Directory listing','049':b'database-roundtrip-ok'}.get(i,b'Welcome to nginx')

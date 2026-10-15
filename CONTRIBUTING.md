@@ -23,3 +23,5 @@ Use the issue templates for broken labs or improvements. Do not include secrets 
 Runtime assignments live in `data/runtimes.json`; the extra compound catalog is `data/compounds.json`. Preserve all original 100 IDs and level boundaries. New compound incidents must stay outside that catalog.
 
 For runtime changes, CI must observe the intended fault, verify recovery with repeated checks, reset to the original failure, and clean up. A compound must also reject an incomplete repair. Session changes must retain honest distinctions between self-assessed explanations and native recovery verification.
+
+Regenerate per-lab CI steps after runtime registry changes with `python3 scripts/build_workflow.py`. This keeps every executable scenario visible as its own step while reusing one Docker runner and one local Kubernetes cluster.

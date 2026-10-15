@@ -20,9 +20,10 @@ jobs:
           python-version: '3.12'
       - run: python3 -m unittest discover -s tests -v
       - run: python3 scripts/validate.py
-      - name: Generated casebooks stay in sync
+      - name: Generated files stay in sync
         run: |
           python3 scripts/build_docs.py
+          python3 scripts/build_workflow.py
           git diff --exit-code
   docker:
     runs-on: ubuntu-latest
@@ -32,7 +33,24 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: python3 scripts/ci_native.py docker
+      - name: "005 — fault, repair, stability, reset"
+        run: python3 scripts/ci_native.py docker --id 005
+      - name: "006 — fault, repair, stability, reset"
+        run: python3 scripts/ci_native.py docker --id 006
+      - name: "010 — fault, repair, stability, reset"
+        run: python3 scripts/ci_native.py docker --id 010
+      - name: "012 — fault, repair, stability, reset"
+        run: python3 scripts/ci_native.py docker --id 012
+      - name: "019 — fault, repair, stability, reset"
+        run: python3 scripts/ci_native.py docker --id 019
+      - name: "020 — fault, repair, stability, reset"
+        run: python3 scripts/ci_native.py docker --id 020
+      - name: "021 — fault, repair, stability, reset"
+        run: python3 scripts/ci_native.py docker --id 021
+      - name: "033 — fault, repair, stability, reset"
+        run: python3 scripts/ci_native.py docker --id 033
+      - name: "049 — fault, repair, stability, reset"
+        run: python3 scripts/ci_native.py docker --id 049
   kubernetes:
     runs-on: ubuntu-latest
     timeout-minutes: 35
@@ -48,8 +66,38 @@ jobs:
           sudo mv kind /usr/local/bin/kind
       - name: Create disposable cluster
         run: kind create cluster --name devops-labs --wait 120s
-      - name: Verify faults, partial repairs, recovery, and reset
-        run: python3 scripts/ci_native.py kubernetes
+      - name: "023 — fault, repair, stability, reset"
+        run: python3 scripts/ci_native.py kubernetes --id 023
+      - name: "024 — fault, repair, stability, reset"
+        run: python3 scripts/ci_native.py kubernetes --id 024
+      - name: "025 — fault, repair, stability, reset"
+        run: python3 scripts/ci_native.py kubernetes --id 025
+      - name: "026 — fault, repair, stability, reset"
+        run: python3 scripts/ci_native.py kubernetes --id 026
+      - name: "027 — fault, repair, stability, reset"
+        run: python3 scripts/ci_native.py kubernetes --id 027
+      - name: "050 — fault, repair, stability, reset"
+        run: python3 scripts/ci_native.py kubernetes --id 050
+      - name: "051 — fault, repair, stability, reset"
+        run: python3 scripts/ci_native.py kubernetes --id 051
+      - name: "052 — fault, repair, stability, reset"
+        run: python3 scripts/ci_native.py kubernetes --id 052
+      - name: "054 — fault, repair, stability, reset"
+        run: python3 scripts/ci_native.py kubernetes --id 054
+      - name: "056 — fault, repair, stability, reset"
+        run: python3 scripts/ci_native.py kubernetes --id 056
+      - name: "057 — fault, repair, stability, reset"
+        run: python3 scripts/ci_native.py kubernetes --id 057
+      - name: "080 — fault, repair, stability, reset"
+        run: python3 scripts/ci_native.py kubernetes --id 080
+      - name: "081 — fault, repair, stability, reset"
+        run: python3 scripts/ci_native.py kubernetes --id 081
+      - name: "M01 — fault, repair, stability, reset"
+        run: python3 scripts/ci_native.py kubernetes --id M01
+      - name: "M02 — fault, repair, stability, reset"
+        run: python3 scripts/ci_native.py kubernetes --id M02
+      - name: "M03 — fault, repair, stability, reset"
+        run: python3 scripts/ci_native.py kubernetes --id M03
       - name: Collect Kubernetes diagnostics on failure
         if: failure()
         run: |
