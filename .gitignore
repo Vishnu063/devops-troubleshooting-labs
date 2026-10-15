@@ -1,0 +1,13 @@
+.practice/
+.lab-state/
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.env.*
+*.tfstate
+*.tfstate.*
+*.tfplan
+.terraform/
+*.pem
+*.key
