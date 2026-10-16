@@ -42,12 +42,20 @@ def main(argv=None):
     q=sub.add_parser('hint');q.add_argument('id');q.add_argument('--step',type=int,choices=[1,2,3],default=1)
     q=sub.add_parser('record');q.add_argument('id');q.add_argument('--score',type=int,choices=range(11),required=True);q.add_argument('--minutes',type=int,required=True);q.add_argument('--hints',type=int,choices=range(4),default=0)
     sub.add_parser('progress')
+    q=sub.add_parser('doctor',help='Check local prerequisites without starting anything');q.add_argument('--runtime',choices=['evidence','git','docker','kubernetes'],default='evidence')
+    q=sub.add_parser('track',help='Choose an ordered practice path');q.add_argument('name',choices=['git','docker','kubernetes','advanced'])
     session=sub.add_parser('session',help='Timed sessions, hidden symptoms, and optional level unlocking').add_subparsers(dest='session_command',required=True)
     q=session.add_parser('start');q.add_argument('id',nargs='?');q.add_argument('--hidden',action='store_true');q.add_argument('--level',type=int,choices=[1,2,3]);q.add_argument('--tool');q.add_argument('--runnable',action='store_true');q.add_argument('--compound',action='store_true');q.add_argument('--unlock',action='store_true');q.add_argument('--minutes',type=int)
     for name in ['status','evidence','solution','up','check','reset','down','abandon','path']:session.add_parser(name)
     q=session.add_parser('hint');q.add_argument('--step',type=int,choices=[1,2,3],default=1)
     q=session.add_parser('finish');q.add_argument('--score',type=int,choices=range(11),required=True)
     a=p.parse_args(argv)
+    if a.command=='doctor':
+        from onboarding import doctor
+        return doctor(a.runtime)
+    if a.command=='track':
+        from onboarding import track
+        return track(a.name,select,RUNTIMES)
     if a.command=='session':
         import sessions
         return sessions.handle(a,sys.modules[__name__])

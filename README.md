@@ -4,6 +4,17 @@
 
 [All 100 scenarios](CATALOG.md) · [Compound incidents](COMPOUNDS.md) · [Local lab setup](docs/LABS.md) · [Timed sessions](docs/SESSIONS.md) · [Practice method](docs/PRACTICE.md)
 
+## New here?
+
+Start with [your first lab](docs/START_HERE.md): a local Git incident with an expected failing check, room to investigate, and a recovery check. No cloud account or containers needed.
+
+```bash
+python3 lab.py doctor --runtime git
+python3 lab.py track git
+```
+
+Already comfortable with Git? Choose `track docker`, `track kubernetes`, or `track advanced`. Paths print an ordered practice plan; they do not start resources. The setup checker checks local executables only.
+
 ## Pick your practice
 
 | Mode | Available now | What you do |
