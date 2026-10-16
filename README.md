@@ -1,5 +1,7 @@
 # DevOps Troubleshooting Labs
 
+[Reviewer walkthrough](INTERVIEW.md) · [Portfolio](https://github.com/Vishnu063/Vishnu063/blob/main/PORTFOLIO.md)
+
 **100 scenarios. Three difficulty levels. Real faults, hidden incidents, and proof of recovery.**
 
 [All 100 scenarios](CATALOG.md) · [Compound incidents](COMPOUNDS.md) · [Local lab setup](docs/LABS.md) · [Timed sessions](docs/SESSIONS.md) · [Practice method](docs/PRACTICE.md)
