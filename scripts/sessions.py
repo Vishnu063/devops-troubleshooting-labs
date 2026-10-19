@@ -38,21 +38,26 @@ def status(s,c):
     print(f"Elapsed {int(elapsed)//60:02}:{int(elapsed)%60:02} · Remaining {int(remaining)//60:02}:{int(remaining)%60:02}"+(' · TIME EXPIRED' if elapsed>s['budget'] else ''))
     print(SYMPTOMS.get(c['id'],f"An incident affects the {c['tool']} environment. Investigate the supplied observations and restore the intended behavior."))
     print(f"Practice: {RUNTIMES.get(c['id'],'supplied evidence')} · Hints opened: {len(s['hints'])} · Solution revealed: {s['revealed']}")
-    print('Use: session up | evidence | hint | check | status | finish | abandon')
+    if c['id'] in RUNTIMES:print('Starting fault: '+('confirmed for this attempt' if s.get('fault_verified') else 'not confirmed — run session up or session verify-fault'))
+    print('Use: session up | verify-fault | evidence | hint | check | status | finish | abandon')
 
-def native_action(action,s):
-    from native import operate
+def native_action(action,s,wait=120):
+    import native
     # Resource paths and kubectl output necessarily identify local lab resources.
     # Suppress setup chatter in hidden mode, but print the workspace required to investigate.
     if s['hidden'] and action in ['up','reset']:
         out=io.StringIO()
-        with contextlib.redirect_stdout(out):result=operate(action,s['id'])
+        previous=native.QUIET
+        try:
+            native.QUIET=True
+            with contextlib.redirect_stdout(out):result=native.operate(action,s['id'],wait=wait)
+        finally:native.QUIET=previous
         if result:print(out.getvalue())
         else:
             runtime=RUNTIMES[s['id']]
             print('Investigate '+('namespace devops-lab-'+s['id'].lower()+' in context kind-devops-labs' if runtime=='kubernetes' else str(ROOT/'.lab-state'/s['id'])))
         return result
-    return operate(action,s['id'])
+    return native.operate(action,s['id'],wait=wait)
 
 def handle(args,api):
     action=args.session_command
@@ -72,7 +77,7 @@ def handle(args,api):
         c=random.choice(choices)
         minutes=c['minutes'] if args.minutes is None else args.minutes
         if minutes<1:raise SystemExit('--minutes must be positive.')
-        s={'id':c['id'],'started':time.time(),'budget':minutes*60,'hidden':args.hidden,'hints':[],'revealed':False,'verified':False}
+        s={'id':c['id'],'started':time.time(),'budget':minutes*60,'hidden':args.hidden,'hints':[],'revealed':False,'verified':False,'fault_verified':False}
         write(s);status(s,c);return 0
     if action=='path':
         history=api.attempts();all_cases=api.all_cases()
@@ -81,11 +86,19 @@ def handle(args,api):
     s=current();c=api.select(s['id'])
     if action=='status':status(s,c);return 0
     if action=='abandon':path().unlink();print(f"Session abandoned. Clean up with: python3 lab.py down {s['id']}");return 0
-    if action in ['up','check','reset','down']:
+    if action in ['up','check','reset','down','verify-fault']:
         if c['id'] not in RUNTIMES:print('Evidence-only session: explain your diagnosis, recovery, and verification in an incident report.');return 2
-        if action in ['up','reset','down']:s['verified']=False
-        result=native_action(action,s)
+        if action in ['up','reset','down']:s['verified']=False;s['fault_verified']=False
+        result=native_action(action,s,getattr(args,'wait',120))
         if action=='check':s['verified']=result==0
+        if action in ['up','reset','verify-fault']:
+            import native
+            marker=native.ROOT/'.lab-state'/s['id']/'startup.json'
+            if result==0 and marker.exists():
+                proof=json.loads(marker.read_text())
+                s['fault_verified']=proof.get('observed') is True and proof.get('checked_at',0)>=s['started']
+            else:s['fault_verified']=False
+            print('Starting fault confirmed for this attempt.' if s['fault_verified'] else 'Starting fault is not confirmed for this attempt. Use session verify-fault, or session reset to recreate it.')
         write(s);return result
     if action=='evidence':
         print('Synthetic investigation snapshot:')
@@ -93,12 +106,15 @@ def handle(args,api):
         if c['id'].startswith('M'):print('Collect live Kubernetes evidence. There may be more than one fault.')
         return 0
     if action=='hint':
-        if args.step not in s['hints']:s['hints'].append(args.step)
+        step=args.step or next((n for n in [1,2,3] if n not in s['hints']),3)
+        if step not in s['hints']:s['hints'].append(step)
+        if step==3 and not c['id'].startswith('M'):s['revealed']=True
         write(s)
         if c['id'].startswith('M'):
             hints=['Check workload startup, scheduling, readiness, and the request path independently.','Inspect pod events, resources, probes, Service selectors, and EndpointSlices.','Each compound includes two independent faults. The separate solution identifies them.']
         else:hints=['Separate the failing dependency from the user-visible symptom.',c['checks'],c['cause']]
-        print(hints[args.step-1]);return 0
+        print(f'Hint {step}/3'+(' · diagnosis revealed (practice only)' if step==3 and not c['id'].startswith('M') else ''))
+        print(hints[step-1]);return 0
     if action=='solution':
         s['revealed']=True;write(s)
         solution=ROOT/'runnable'/c['id']/'solution.md' if c['id'].startswith('M') else ROOT/f"scenarios/level-{c['level']}/{c['id']}/solution.md"
@@ -108,10 +124,13 @@ def handle(args,api):
         if native:
             result=native_action('check',s)
             if result:print('Recovery has not passed. Keep practicing or abandon the session.');return result
+            if not s.get('fault_verified'):
+                print('Recovery passes, but this attempt has no verified starting fault. Reset and reproduce the fault before claiming a completion.');return 2
         elapsed=max(0,time.time()-s['started'])
         completed=args.score>=7 and elapsed<=s['budget'] and not s['revealed'] and len(s['hints'])<=1
-        entry={'id':c['id'],'score':args.score,'minutes':max(1,math.ceil(elapsed/60)),'seconds':round(elapsed),'hints':len(s['hints']),'time':datetime.now(timezone.utc).isoformat(),'completed':completed,'native_verified':native,'solution_revealed':s['revealed'],'timed_out':elapsed>s['budget'],'mode':'hidden' if s['hidden'] else 'guided'}
+        entry={'id':c['id'],'score':args.score,'minutes':max(1,math.ceil(elapsed/60)),'seconds':round(elapsed),'hints':len(s['hints']),'time':datetime.now(timezone.utc).isoformat(),'completed':completed,'native_verified':native,'startup_verified':s.get('fault_verified',False),'solution_revealed':s['revealed'],'timed_out':elapsed>s['budget'],'mode':'hidden' if s['hidden'] else 'guided'}
         history=api.attempts();history.append(entry);api.save_attempts(history);path().unlink()
         print(f"Session recorded: {args.score}/10 self-assessed · {'counts toward level unlocking' if completed else 'practice attempt; does not count toward unlocking'}. Native recovery {'verified' if native else 'not applicable (evidence drill)'}. Clean up with: python3 lab.py down {c['id']}.")
         return 0
     raise SystemExit('Unknown session action.')
+

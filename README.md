@@ -17,6 +17,38 @@ python3 lab.py track git
 
 Already comfortable with Git? Choose `track docker`, `track kubernetes`, or `track advanced`. Paths print an ordered practice plan; they do not start resources. The setup checker checks local executables only.
 
+## Practice real errors without seeing the answer
+
+Start a blind Git lab (no Docker or cloud account needed):
+
+```bash
+python3 lab.py session start --blind --runnable --tool Git
+python3 lab.py session up
+python3 lab.py session check
+```
+
+Fresh `up` and `reset` now wait for a matching live fault and report **READY: expected fault confirmed**. A recovery **FAIL** is expected before repair; an arbitrary failing command alone does not prove the lab is ready. **NOT READY** or **Lab error** means setup or the intended fault needs investigation before practicing. Docker/Kubernetes checks also wait for their required runtime signals; they do not label every unreachable workload as the intended incident.
+
+Investigate the printed workspace/namespace, repair it yourself, then verify:
+
+```bash
+python3 lab.py session hint
+# Repeat only when needed: hints advance from 1 to 3.
+python3 lab.py session check
+python3 lab.py session finish --score 8
+```
+
+`session check` must pass after repair. Native completions also require a starting fault confirmed during the same attempt. The score rates your interview explanation: what failed, what you checked, how you restored it, and how you verified recovery. Hint 3 reveals the diagnosis for standard cases and marks the attempt as revealed; solutions remain separate.
+
+To recheck an existing lab's starting fault or recreate it:
+
+```bash
+python3 lab.py session verify-fault --wait 120
+python3 lab.py session reset
+```
+
+Reset discards the lab repair and recreates the broken state. `--blind` is an alias for `--hidden`; readable local paths/source can still reveal IDs. Full instructions and cleanup: [sessions](docs/SESSIONS.md).
+
 ## Pick your practice
 
 | Mode | Available now | What you do |

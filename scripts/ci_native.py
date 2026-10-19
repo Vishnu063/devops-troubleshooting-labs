@@ -17,37 +17,7 @@ def wait_until(predicate,seconds=90):
     raise RuntimeError('Timed out waiting for expected native behavior')
 
 def fault_observed(i):
-    if i in native.DOCKER:
-        d=native.docker_info(i)
-        if not d:return False
-        if i in ['006','019']:return d['State']['Status']=='exited' and d['State']['ExitCode']!=0
-        if not d['State']['Running']:return False
-        if i=='033':
-            try:
-                ports=d['NetworkSettings']['Ports']['9090/tcp'];port=ports[0]['HostPort']
-                _,body=native.fetch(f'http://127.0.0.1:{port}/api/v1/query?query=up')
-                values=json.loads(body)['data']['result']
-                return bool(values) and values[0]['value'][1]=='0'
-            except (OSError,ValueError):return False
-        # All other Docker workloads must be running before failure is graded.
-        return not native.check_docker(i)
-    pods=json.loads(native.kube(i,'get','pods','-o','json',capture=True).stdout)['items']
-    observed=json.dumps([p.get('status',{}) for p in pods])
-    events=json.loads(native.kube(i,'get','events','-o','json',capture=True).stdout)['items']
-    messages=' '.join(e.get('message','') for e in events)
-    if i in ['023','052']:return 'CrashLoopBackOff' in observed or any(s.get('restartCount',0)>0 for p in pods for s in p.get('status',{}).get('containerStatuses',[]))
-    if i in ['024','M01']:return 'ErrImagePull' in observed or 'ImagePullBackOff' in observed
-    if i in ['025','M02']:return 'Insufficient cpu' in messages
-    if i=='026':return 'CreateContainerConfigError' in observed
-    if i in ['050','M03']:return 'OOMKilled' in observed
-    if i=='051':return 'Readiness probe failed' in messages
-    if i=='056':return 'fast-ssd' in messages and ('not found' in messages or 'not found' in observed)
-    if i=='057':
-        d=json.loads(native.kube(i,'get','deployment','web','-o','json',capture=True).stdout)
-        return any(c.get('reason')=='ProgressDeadlineExceeded' for c in d.get('status',{}).get('conditions',[]))
-    if i=='080':return 'exceeded quota' in messages
-    if i in ['027','054','081']:return native.deployments_ready(i) and not native.check_kube(i)
-    return False
+    return native.fault_observed(i)
 
 def rollout(i):
     for name in (['web','legacy'] if i=='081' else ['web']):

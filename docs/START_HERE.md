@@ -21,7 +21,9 @@ python3 lab.py up 013
 python3 lab.py check 013
 ```
 
-**The first check is supposed to fail.** That confirms there is something to repair. The lab prints an isolated repository path; this is where you work. Your own repository and global Git settings are not the repair target.
+Fresh `up` first confirms a matching live fault and prints **READY: expected fault confirmed**. **The first recovery check is supposed to fail.** A failing check alone is not proof that the intended fault exists. If setup reports **NOT READY** or **Lab error**, investigate setup before treating it as the exercise. The lab prints an isolated repository path; this is where you work. Your own repository and global Git settings are not the repair target.
+
+For an existing workspace, run `python3 lab.py verify-fault 013 --wait 120` to confirm the fault, or `python3 lab.py reset 013` to discard changes and recreate it. Existing Git/Docker workspaces are preserved when `up` is repeated, so applying a repair does not trigger a new broken-state check.
 
 ## 3. Investigate before changing anything
 
@@ -73,3 +75,4 @@ Write your hypotheses and verification plan, then compare against the separate s
 - **Failed recovery check:** read the observations, inspect live state, and verify your hypothesis. Do not copy a fixed manifest merely to obtain a pass.
 
 Report reproducible problems using the repository's bug template. Include your OS, tool versions, case ID, command, and redacted output.
+

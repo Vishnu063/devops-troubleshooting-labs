@@ -9,11 +9,13 @@ import urllib.request
 from pathlib import Path
 from registry import RUNTIMES
 ROOT=Path(__file__).resolve().parents[1]
+QUIET=False
 K8S={i for i,r in RUNTIMES.items() if r=='kubernetes'}
 DOCKER={i for i,r in RUNTIMES.items() if r=='docker'}
 GIT={i for i,r in RUNTIMES.items() if r=='git'}
 
 def run(args,cwd=None,capture=False,timeout=45,ok=True):
+    capture=capture or QUIET
     r=subprocess.run(args,cwd=cwd,text=True,stdout=subprocess.PIPE if capture else None,stderr=subprocess.PIPE if capture else None,timeout=timeout)
     if ok and r.returncode:raise RuntimeError((r.stderr or r.stdout or 'Command failed').strip())
     return r
@@ -130,6 +132,110 @@ def grade(i,samples=3,interval=1):
         if n+1<samples:time.sleep(interval)
     return before is not None and before==stability_signature(i)
 
+def fault_observed(i):
+    """Match live fault signals, not simply the inverse of the recovery grader."""
+    if i in GIT:
+        path=ROOT/'.lab-state'/i/'repo'
+        if not (path/'.git').exists():return False
+        if i=='013':
+            return bool(git(path,'ls-files','--unmerged',capture=True).stdout.strip()) and '<<<<<<<' in (path/'app.conf').read_text()
+        return (path/'app.conf').read_text()=='TIMEOUT=0\nRETRIES=3\n' and not git(path,'status','--porcelain',capture=True).stdout.strip()
+    if i in DOCKER:
+        d=docker_info(i)
+        if not d:return False
+        if i in ['006','019']:
+            if d['State']['Status']!='exited' or d['State']['ExitCode']==0:return False
+            logs=compose(i,'logs','--no-color','web',capture=True).stdout
+            return ('Address already in use' if i=='006' else 'required variable APP_MODE missing') in logs
+        if not d['State']['Running']:return False
+        ports=[(key,entry) for key,values in (d['NetworkSettings']['Ports'] or {}).items() for entry in (values or [])]
+        if len(ports)!=1 or ports[0][1]['HostIp']!='127.0.0.1':return False
+        target,port=ports[0];base=f"http://127.0.0.1:{port['HostPort']}"
+        if i in ['010','020']:
+            # Prove the process serves inside its container before treating the
+            # failed published request as the intended networking fault.
+            internal=compose(i,'exec','-T','web',*(['python','-c',"import urllib.request; assert urllib.request.urlopen('http://127.0.0.1:8080').status==200"] if i=='010' else ['wget','-qO-','http://127.0.0.1:80/']),capture=True,ok=False)
+            configured=('127.0.0.1' in d['Config']['Cmd'] if i=='010' else target=='8080/tcp')
+            return internal.returncode==0 and configured and not check_docker(i)
+        try:
+            if i=='033':
+                _,body=fetch(base+'/api/v1/query?'+urllib.parse.urlencode({'query':'up{job="lab"}'}))
+                values=json.loads(body)['data']['result']
+                wrong_target=any(v['metric'].get('instance')=='metrics:9091' and float(v['value'][1])==0 for v in values)
+                if not wrong_target:return False
+                healthy=compose(i,'exec','-T','metrics','python','-c',"import urllib.request; assert b'lab_requests_total 42' in urllib.request.urlopen('http://127.0.0.1:9100/metrics').read()",capture=True,ok=False)
+                return healthy.returncode==0
+            status,body=fetch(base+'/')
+        except urllib.error.HTTPError as error:
+            status,body=error.code,error.read()
+        except (urllib.error.URLError,TimeoutError,ConnectionError):return False
+        if i=='005':return status==503 and b'Permission denied reading application data' in body
+        if i=='012':
+            healthy=compose(i,'exec','-T','backend','wget','-qO-','http://127.0.0.1:80/',capture=True,ok=False)
+            return status==502 and b'Bad Gateway' in body and healthy.returncode==0 and 'Welcome to nginx' in healthy.stdout
+        if i=='021':
+            empty=ROOT/'.lab-state'/i/'empty'
+            mounted=any(m.get('Destination')=='/usr/share/nginx/html' and Path(m.get('Source','')).resolve()==empty.resolve() for m in d.get('Mounts',[]))
+            return status==403 and b'Forbidden' in body and mounted and empty.is_dir() and not any(empty.iterdir())
+        if i=='049':
+            ping=compose(i,'exec','-T','database','redis-cli','ping',capture=True,ok=False)
+            return status==503 and b'Connection refused' in body and 'DB_HOST=localhost' in d['Config'].get('Env',[]) and ping.returncode==0 and 'PONG' in ping.stdout
+        return False
+    pods=json.loads(kube(i,'get','pods','-o','json',capture=True).stdout)['items']
+    # A working investigation pod distinguishes lab faults from failed image
+    # downloads or a broken client environment.
+    if not any(p['metadata']['name']=='client' and any(c.get('type')=='Ready' and c.get('status')=='True' for c in p.get('status',{}).get('conditions',[])) for p in pods):return False
+    workload=[p for p in pods if p['metadata']['name']!='client']
+    observed=json.dumps([p.get('status',{}) for p in workload])
+    events=json.loads(kube(i,'get','events','-o','json',capture=True).stdout)['items']
+    messages=' '.join(e.get('message','') for e in events)
+    if i in ['M01','M03']:
+        service=json.loads(kube(i,'get','service','web','-o','json',capture=True).stdout)
+        if service['spec'].get('selector')!={'app':'checkout'}:return False
+    if i=='M02':
+        deployment=json.loads(kube(i,'get','deployment','web','-o','json',capture=True).stdout)
+        if deployment['spec']['template']['spec']['containers'][0].get('readinessProbe',{}).get('httpGet',{}).get('path')!='/not-ready':return False
+    if i=='023':
+        logs=kube(i,'logs','deployment/web','--tail=20',capture=True,ok=False)
+        return 'app.conf' in logs.stdout and 'No such file' in logs.stdout
+    if i in ['024','M01']:
+        return ('ErrImagePull' in observed or 'ImagePullBackOff' in observed) and 'does-not-exist-lab' in messages and any(word in messages.lower() for word in ['not found','manifest unknown'])
+    if i in ['025','M02']:return 'Insufficient cpu' in messages
+    if i=='026':return 'CreateContainerConfigError' in observed and 'payment-config' in observed and 'not found' in observed
+    if i in ['050','M03']:return 'OOMKilled' in observed
+    if i=='051':return 'Readiness probe failed' in messages and '404' in messages
+    if i=='052':return 'Liveness probe failed' in messages and any(s.get('restartCount',0)>0 for p in workload for s in p.get('status',{}).get('containerStatuses',[]))
+    if i=='056':return 'fast-ssd' in messages and 'not found' in messages
+    if i=='057':
+        d=json.loads(kube(i,'get','deployment','web','-o','json',capture=True).stdout)
+        return 'does-not-exist-lab' in messages and any(word in messages.lower() for word in ['not found','manifest unknown']) and any(c.get('reason')=='ProgressDeadlineExceeded' for c in d.get('status',{}).get('conditions',[]))
+    if i=='080':return 'exceeded quota' in messages and 'best-effort-budget' in messages
+    if i in ['027','054','081']:
+        if not deployments_ready(i):return False
+        if i=='027':
+            service=json.loads(kube(i,'get','service','web','-o','json',capture=True).stdout)
+            configured=service['spec'].get('selector')=={'app':'checkout'}
+        else:
+            d=json.loads(kube(i,'get','deployment','legacy' if i=='081' else 'web','-o','json',capture=True).stdout)
+            spec=d['spec']['template']['spec']
+            configured=(spec.get('dnsPolicy')=='None' and spec.get('dnsConfig',{}).get('nameservers')==['192.0.2.53']) if i=='054' else any(p.get('name')=='http' and p.get('containerPort')==81 for p in spec['containers'][0].get('ports',[]))
+        return configured and not check_kube(i)
+    return False
+
+def verify_fault(i,wait=120):
+    deadline=time.monotonic()+wait
+    print('Checking that the intended fault is present (startup and image pulls may take time)...',flush=True)
+    while True:
+        if fault_observed(i) and not grade(i,samples=1,interval=0):
+            work=ROOT/'.lab-state'/i;work.mkdir(parents=True,exist_ok=True)
+            (work/'startup.json').write_text(json.dumps({'observed':True,'checked_at':time.time()}))
+            print('READY: expected fault confirmed. Investigate first; recovery check should fail until repaired.')
+            return 0
+        if time.monotonic()>=deadline:
+            print('NOT READY: intended fault was not confirmed. Check runtime access, image downloads and live logs; an already repaired lab must be reset. No practice readiness is claimed.')
+            return 1
+        time.sleep(min(2,max(0,deadline-time.monotonic())))
+
 def guard_cluster():
     if not shutil.which('kubectl'):raise RuntimeError('kubectl and local kind-devops-labs context required. See docs/LABS.md.')
     result=run(['kubectl','--context','kind-devops-labs','--request-timeout=10s','get','nodes','-o','json'],capture=True,timeout=20)
@@ -142,7 +248,7 @@ def owned_namespace(i):
     if json.loads(r.stdout)['metadata'].get('labels',{}).get('devops-troubleshooting-labs')!='true':raise RuntimeError('Refusing to modify an unlabelled namespace.')
     return True
 
-def operate(action,i,samples=3,interval=1):
+def operate(action,i,samples=3,interval=1,wait=120):
     if i not in RUNTIMES:print('This case is an evidence drill. Use show, evidence, hint, and solution.');return 2
     work=ROOT/'.lab-state'/i
     try:
@@ -153,24 +259,28 @@ def operate(action,i,samples=3,interval=1):
                 while owned_namespace(i):
                     if time.monotonic()>deadline:raise RuntimeError('Namespace still terminating. Wait before retrying reset.')
                     time.sleep(1)
-            return operate('up',i)
+            return operate('up',i,wait=wait)
         if i in GIT:
             if not shutil.which('git'):raise RuntimeError('Git is required.')
             if action=='up':
-                if not work.exists():init_git(i,work/'repo')
-                print(f'Investigate {work}/repo. Initial check should fail.');return 0
+                fresh=not work.exists()
+                if fresh:init_git(i,work/'repo')
+                print(f'Investigate {work}/repo.')
+                return verify_fault(i,wait) if fresh or not (work/'startup.json').exists() else 0
             if action=='down':
                 if work.exists():shutil.rmtree(work)
                 print('Lab workspace removed.');return 0
         elif i in DOCKER:
             if not shutil.which('docker'):raise RuntimeError('Docker Engine and Compose v2 required.')
             if action=='up':
+                fresh=not work.exists()
                 work.mkdir(parents=True,exist_ok=True);(work/'empty').mkdir(exist_ok=True)
                 source=ROOT/'runnable'/i
                 if (source/'assets').exists():shutil.copytree(source/'assets',work/'assets',dirs_exist_ok=True) if not (work/'assets').exists() else None
                 target=work/'compose.json'
                 if not target.exists():shutil.copyfile(source/'broken.json',target)
-                compose(i,'up','-d');print(f'Edit {target} or its assets, then rerun up. Initial check should fail.');return 0
+                compose(i,'up','-d');print(f'Edit {target} or its assets, then rerun up.')
+                return verify_fault(i,wait) if fresh or not (work/'startup.json').exists() else 0
             if action=='down':
                 if (work/'compose.json').exists():compose(i,'down','--volumes','--remove-orphans')
                 if work.exists():shutil.rmtree(work)
@@ -182,14 +292,17 @@ def operate(action,i,samples=3,interval=1):
                 work.mkdir(parents=True,exist_ok=True)
                 ns={'apiVersion':'v1','kind':'Namespace','metadata':{'name':'devops-lab-'+i.lower(),'labels':{'devops-troubleshooting-labs':'true'}}}
                 (work/'namespace.json').write_text(json.dumps(ns));kube(i,'apply','-f',str(work/'namespace.json'));kube(i,'apply','-f',str(ROOT/'runnable'/i/'broken.json'))
-                print(f'Investigate namespace devops-lab-{i.lower()}. Initial check should fail.');return 0
+                print(f'Investigate namespace devops-lab-{i.lower()}.')
+                return verify_fault(i,wait)
             if action=='down':
                 if exists:kube(i,'delete','namespace','devops-lab-'+i.lower(),'--wait=false')
                 if work.exists():shutil.rmtree(work)
                 print('Lab namespace deletion requested; lab data is disposable.');return 0
             if not exists:raise RuntimeError('Run up first.')
+        if action=='verify-fault':return verify_fault(i,wait)
         passed=grade(i,samples,interval)
         print(f'PASS: recovery verified across {samples if i not in GIT else 1} checks.' if passed else 'FAIL: recovery or stability criteria not met. Inspect live evidence and retry.')
         return 0 if passed else 1
     except (RuntimeError,OSError,subprocess.TimeoutExpired,ValueError) as error:
         print(f'Lab error: {error}');return 2
+

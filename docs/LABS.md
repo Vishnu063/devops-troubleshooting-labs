@@ -74,6 +74,12 @@ Special cases:
 
 ## Stronger recovery checks
 
+Fresh `up` and `reset` now check live startup-fault signals using the same detector as CI. The check matches Git conflicts/faulty committed settings, container logs/HTTP responses/internal dependency checks, or Kubernetes status/events and relevant live configuration. Kubernetes checks require the investigation pod to be ready. Compound startup checks observe the primary failing workload and confirm the second broken configuration; the existing partial-repair CI checks still test that fixing only one issue is insufficient.
+
+The separate `verify-fault ID --wait 120` command returns 0 only when the expected failure is observed and the recovery grader still fails. A timeout returns 1 (**NOT READY**); a runtime error returns 2. It does not apply fixes. Existing Git/Docker `up` calls preserve changes rather than assuming the workspace is still broken. Recovery `check` keeps its existing meaning: 0 for verified recovery, 1 for failed recovery, and 2 for setup/runtime errors.
+
+Local validation for this change exercised actual Git failure, blind setup, repair and completion, plus reset and repeated recovery checks. Docker/Kubernetes detectors were checked with fixtures; those runtimes are unavailable in the editing environment, so new live validation there remains for disposable CI/your local cluster. No cloud resources are provisioned.
+
 ```bash
 python3 lab.py check 081 --samples 5 --interval 1
 ```

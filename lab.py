@@ -36,18 +36,21 @@ def main(argv=None):
     sub=p.add_subparsers(dest='command',required=True)
     for name in ['list','random']:
         q=sub.add_parser(name);q.add_argument('--level',type=int,choices=[1,2,3]);q.add_argument('--tool');q.add_argument('--runnable',action='store_true');q.add_argument('--compound',action='store_true')
-    for name in ['show','evidence','solution','up','check','down','reset']:
+    for name in ['show','evidence','solution','up','check','down','reset','verify-fault']:
         q=sub.add_parser(name);q.add_argument('id')
         if name=='check':q.add_argument('--samples',type=int,choices=range(1,11),default=3);q.add_argument('--interval',type=float,default=1)
+        if name in ['up','reset','verify-fault']:q.add_argument('--wait',type=int,choices=range(1,301),metavar='SECONDS',default=120)
     q=sub.add_parser('hint');q.add_argument('id');q.add_argument('--step',type=int,choices=[1,2,3],default=1)
     q=sub.add_parser('record');q.add_argument('id');q.add_argument('--score',type=int,choices=range(11),required=True);q.add_argument('--minutes',type=int,required=True);q.add_argument('--hints',type=int,choices=range(4),default=0)
     sub.add_parser('progress')
     q=sub.add_parser('doctor',help='Check local prerequisites without starting anything');q.add_argument('--runtime',choices=['evidence','git','docker','kubernetes'],default='evidence')
     q=sub.add_parser('track',help='Choose an ordered practice path');q.add_argument('name',choices=['git','docker','kubernetes','advanced'])
     session=sub.add_parser('session',help='Timed sessions, hidden symptoms, and optional level unlocking').add_subparsers(dest='session_command',required=True)
-    q=session.add_parser('start');q.add_argument('id',nargs='?');q.add_argument('--hidden',action='store_true');q.add_argument('--level',type=int,choices=[1,2,3]);q.add_argument('--tool');q.add_argument('--runnable',action='store_true');q.add_argument('--compound',action='store_true');q.add_argument('--unlock',action='store_true');q.add_argument('--minutes',type=int)
-    for name in ['status','evidence','solution','up','check','reset','down','abandon','path']:session.add_parser(name)
-    q=session.add_parser('hint');q.add_argument('--step',type=int,choices=[1,2,3],default=1)
+    q=session.add_parser('start');q.add_argument('id',nargs='?');q.add_argument('--hidden','--blind',dest='hidden',action='store_true');q.add_argument('--level',type=int,choices=[1,2,3]);q.add_argument('--tool');q.add_argument('--runnable',action='store_true');q.add_argument('--compound',action='store_true');q.add_argument('--unlock',action='store_true');q.add_argument('--minutes',type=int)
+    for name in ['status','evidence','solution','up','check','reset','down','verify-fault','abandon','path']:
+        q=session.add_parser(name)
+        if name in ['up','reset','verify-fault']:q.add_argument('--wait',type=int,choices=range(1,301),metavar='SECONDS',default=120)
+    q=session.add_parser('hint');q.add_argument('--step',type=int,choices=[1,2,3])
     q=session.add_parser('finish');q.add_argument('--score',type=int,choices=range(11),required=True)
     a=p.parse_args(argv)
     if a.command=='doctor':
@@ -76,11 +79,11 @@ def main(argv=None):
         return 0
     c=select(a.id);compound=c['id'].startswith('M')
     folder=ROOT/'runnable'/c['id'] if compound else ROOT/f"scenarios/level-{c['level']}/{c['id']}"
-    if a.command in ['up','check','down','reset']:
+    if a.command in ['up','check','down','reset','verify-fault']:
         from native import operate
         interval=getattr(a,'interval',1)
         if not 0<=interval<=10:p.error('--interval must be between 0 and 10 seconds')
-        return operate(a.command,c['id'],getattr(a,'samples',3),interval)
+        return operate(a.command,c['id'],getattr(a,'samples',3),interval,wait=getattr(a,'wait',120))
     if a.command=='record':
         if a.minutes<1:p.error('--minutes must be positive')
         history=attempts();history.append(dict(id=c['id'],score=a.score,minutes=a.minutes,hints=a.hints,time=datetime.now(timezone.utc).isoformat(),completed=False,native_verified=False))
@@ -93,3 +96,4 @@ def main(argv=None):
 if __name__=='__main__':
     try:sys.exit(main())
     except KeyboardInterrupt:sys.exit(130)
+
