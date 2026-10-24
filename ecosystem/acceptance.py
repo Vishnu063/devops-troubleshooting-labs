@@ -77,7 +77,7 @@ def run(cloud,platform,ops,output):
             wait_for(lambda:request(app['url']),'sample HTTP readiness',30)
             prom_port,am_port,bb_port=port(),port(),port()
             os.environ['OPS_PILOT_PROMETHEUS_URL']='http://127.0.0.1:'+str(prom_port)
-            pilot=Pilot(dict(name='SYNTHETIC ecosystem sample',docker_context='default',container=app['container'],health_url=app['url'],interval_seconds=30),private/'ops')
+            pilot=Pilot(dict(name='SYNTHETIC ecosystem sample',docker_context='default',container=app['container'],health_url=app['url'],interval_seconds=30,health_attempts=5),private/'ops')
             hub=EventHub(pilot,private/'ops','ecosystem-demo');server=Server(pilot,0,eventhub=hub)
             thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
             base='http://127.0.0.1:'+str(server.server_port)
