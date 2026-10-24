@@ -114,6 +114,13 @@ def run(cloud,platform,ops,output):
             def action(name):
                 current=hub.get(incident['id'])
                 return request(base+'/api/ecosystem/action',dict(incident_id=current['id'],revision=current['revision'],action=name,plan_id=current['plan_id']),owner)
+            forbidden=dict(incident_id=incident['id'],revision=hub.get(incident['id'])['revision'],action='investigate',plan_id=None)
+            for key in (cloud_key,read_key):
+                try:request(base+'/api/ecosystem/action',forbidden,{'Authorization':'Bearer '+key})
+                except HTTPError as exc:assert exc.code==403
+                else:raise AssertionError('Source/read token reached the owner action API')
+            failed=action('verify');assert failed['verification']['status']=='failed'
+            record('Source/read credentials cannot authorize and failed verification remains failed')
             action('investigate');record('Real native Docker evidence and deterministic diagnosis collected')
             planned=action('plan');assert planned['proposal']['data']['action']['argv'];record('Exact backend restart proposal created')
             try:action('apply')
@@ -139,7 +146,7 @@ def run(cloud,platform,ops,output):
             from types import SimpleNamespace
             nodes,_,_=viewer.incident_resources(SimpleNamespace(ops_pilot_url=base));assert nodes and nodes[0]['status']=='healthy'
             record('Platform read-only incident view verified')
-            summary=dict(status='pending_cleanup',synthetic=True,customer_changes=False,stages=stages,checks=15,
+            summary=dict(status='pending_cleanup',synthetic=True,customer_changes=False,stages=stages,passed_stages=len(stages),
                 main_process_peak_rss_kib=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
                 elapsed_seconds=round(time.monotonic()-started,3),limits='No claim that the entire optional stack fits in 8 GB; Grafana/Jenkins/Kind/K8sGPT not started')
             (output/'result.json').write_text(json.dumps(summary,indent=2)+'\n')
