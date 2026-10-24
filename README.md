@@ -1,5 +1,11 @@
 # DevOps Troubleshooting Labs
 
+## Optional ecosystem integration
+
+An opt-in cross-project runner verifies a real CloudLaunch outage through monitoring, diagnosis, approval and HTTP/database recovery. Existing native Kubernetes and Docker scenarios are reused; optional integrations are reported separately.
+
+[Architecture, configuration, test evidence and known limits](integrations/README.md).
+
 [Reviewer walkthrough](INTERVIEW.md) · [Portfolio](https://github.com/Vishnu063/Vishnu063/blob/main/PORTFOLIO.md)
 
 **100 scenarios. Three difficulty levels. Real faults, hidden incidents, and proof of recovery.**
