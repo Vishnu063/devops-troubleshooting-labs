@@ -128,7 +128,9 @@ def run(cloud,platform,ops,output):
             else:raise AssertionError('Repair was accepted without owner approval')
             assert not json.loads(docker('inspect',app['container']))[0]['State']['Running'];record('No repair before approval verified')
             action('approve');record('Owner approved exact incident plan')
-            applied=action('apply');assert applied['execution']['infrastructure_status']=='verified';assert applied['execution']['application_health']['healthy'] is True
+            applied=action('apply')
+            print(json.dumps({'recovery_observation':applied.get('execution'),'configured_endpoint':app['url'],'current_port_mapping':docker('port',app['container'],'8080/tcp')}),flush=True)
+            assert applied['execution']['infrastructure_status']=='verified';assert applied['execution']['application_health']['healthy'] is True
             record('Allowlisted repair executed; container and HTTP verified')
             wait_for(metric,'healthy Prometheus application probe after repair')
             wait_for(lambda:hub.get(incident['id'])['external_resolved'],'Alertmanager resolution webhook')
