@@ -169,3 +169,14 @@ CI checks repository integrity, original faults, incomplete compound repairs, re
 ## Connected ecosystem practice
 
 The optional [ecosystem scenario catalog and acceptance driver](ecosystem/README.md) connect the existing labs to CloudLaunch's disposable sample, real Prometheus/Alertmanager, Triage diagnosis and Ops Pilot's backend approval/recovery controls. All ten initial incident categories include injection/evidence/remediation/verification/cleanup guidance. Scenario metadata is not proof that every Kubernetes/Jenkins/resource alert has run. Existing native runners, reset/down checks and session grading remain unchanged. The lightweight full-path test runs on an owned disposable Docker CI runner; it never touches customer infrastructure.
+
+The new lightweight driver passed [real five-project acceptance](https://github.com/Vishnu063/ops-pilot/actions/runs/40074300156), including actual alert delivery, credential separation, refusal before approval, native restart/HTTP/metrics recovery and ownership-checked cleanup. The existing Docker suite also passed after a bind-error wording compatibility fix. [Detailed results and exact implementation refs](https://github.com/Vishnu063/ops-pilot/blob/feat/unified-devops-engineer/docs/ECOSYSTEM-RESULTS.md). A scenario mapping is not proof that all optional cluster/Jenkins/provider paths were exercised.
+
+```mermaid
+flowchart LR
+  L[Owned lab failure] --> M[Real monitoring alert]
+  M --> T[Triage evidence / diagnosis]
+  T --> O[Ops Pilot separate approval]
+  O --> R[Recovery criteria + report + scoped cleanup]
+```
+
