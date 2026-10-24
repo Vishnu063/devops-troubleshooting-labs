@@ -1,0 +1,27 @@
+name: Ecosystem lab source checks
+on:
+  push:
+    branches: [feat/unified-devops-engineer]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  syntax:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m compileall -q ecosystem
+      - name: Validate scenario metadata and existing fixture paths
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          items=json.loads(Path('ecosystem/scenarios.json').read_text())
+          assert len({i['id'] for i in items})==10
+          for item in items:
+              if item['existing'].startswith(('runnable/','scenarios/')):
+                  assert Path(item['existing']).is_dir(),item
+          PY

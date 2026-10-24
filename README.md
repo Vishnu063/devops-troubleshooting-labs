@@ -164,3 +164,8 @@ python3 scripts/validate.py
 CI checks repository integrity, original faults, incomplete compound repairs, repeated recovery checks, reset, and cleanup on disposable environments.
 
 [Security reporting](SECURITY.md) · [MIT license](LICENSE)
+
+
+## Connected ecosystem practice
+
+The optional [ecosystem scenario catalog and acceptance driver](ecosystem/README.md) connect the existing labs to CloudLaunch's disposable sample, real Prometheus/Alertmanager, Triage diagnosis and Ops Pilot's backend approval/recovery controls. All ten initial incident categories include injection/evidence/remediation/verification/cleanup guidance. Scenario metadata is not proof that every Kubernetes/Jenkins/resource alert has run. Existing native runners, reset/down checks and session grading remain unchanged. The lightweight full-path test runs on an owned disposable Docker CI runner; it never touches customer infrastructure.
