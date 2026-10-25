@@ -121,15 +121,26 @@ j.save()
             for name,command,fields,code in cases:
                 kubectl('apply','-f','-',document=deployment(name,command,**fields))
                 collector=desk('kubernetes',{'context':context,'namespace':namespace,'resource':name})
+                last_report = {}
                 def observed():
+                    nonlocal last_report
                     report=collector.collect('kubernetes')
+                    last_report = report
                     return report if code in {f['code'] for f in report.get('findings',[])} else None
-                report=wait(observed,150)
+                try:
+                    report=wait(observed,150)
+                except RuntimeError:
+                    (output/(name+'-incomplete.json')).write_text(json.dumps(last_report,indent=2))
+                    print('Incomplete owned '+name+' evidence: '+json.dumps(last_report),flush=True)
+                    raise
                 assert report['actions']==[]
                 (output/(name+'-report.json')).write_text(json.dumps(report,indent=2))
                 evidence['checks'].append('Real Kubernetes '+name+' observed by native Ops Pilot diagnostics')
                 kubectl('delete','deployment',name,'--wait=true','--timeout=45s')
             evidence['status']='passed'
+        except BaseException:
+            evidence['status']='failed'
+            raise
         finally:
             if jenkins:
                 try:
