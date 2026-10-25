@@ -94,8 +94,9 @@ j.save()
             wait(lambda: json.loads(request('/api/json')).get('mode'), 360)
             boundary='ops-'+uid
             source=Path('/work/cloudlaunch/Jenkinsfile').read_bytes()
-            multipart=('--'+boundary+'\r\nContent-Disposition: form-data; name="jenkinsfile"; filename="Jenkinsfile"\r\nContent-Type: text/plain\r\n\r\n').encode()+source+('\r\n--'+boundary+'--\r\n').encode()
+            multipart=('--'+boundary+'\r\nContent-Disposition: form-data; name="jenkinsfile"\r\nContent-Type: text/plain\r\n\r\n').encode()+source+('\r\n--'+boundary+'--\r\n').encode()
             validation=request('/pipeline-model-converter/validate',multipart,'multipart/form-data; boundary='+boundary)
+            print('CloudLaunch declarative validation: '+validation[:4000],flush=True)
             if 'Jenkinsfile successfully validated' not in validation:
                 (output/'cloudlaunch-pipeline-validation.txt').write_text(validation[:4000])
                 raise RuntimeError('CloudLaunch declarative pipeline validation failed')
