@@ -55,10 +55,10 @@ def main():
             p.write_text(json.dumps({'environment': uid, 'tools': {tool: conf}}));p.chmod(0o600)
             return Diagnostics(p, root)
         try:
-            # Every service lives inside the enclosing 8 GiB CI container. No host socket or cloud credentials.
+            # Every service lives inside the enclosing 8 GB CI container. No host socket or cloud credentials.
             limit = Path('/sys/fs/cgroup/memory.max').read_text().strip()
-            if limit != str(8 * 1024**3):
-                raise RuntimeError('Expected an enforced enclosing 8 GiB cgroup')
+            if limit != str(8 * 1000**3):
+                raise RuntimeError('Expected an enforced enclosing 8 GB cgroup')
             evidence['memory_limit_bytes'] = int(limit)
             password = secrets.token_urlsafe(32)
             os.environ['OPS_LAB_JENKINS_USER'] = 'lab-owner'
@@ -80,7 +80,7 @@ j.save()
                  '--network','host','--mount','type=bind,src='+str(init)+',dst=/var/jenkins_home/init.groovy.d/security.groovy,readonly',
                  '-e','JAVA_OPTS=-Djenkins.install.runSetupWizard=false -Xmx512m',
                  '-e','OPS_LAB_JENKINS_PASSWORD','jenkins/jenkins:lts-jdk21','bash','-c',
-                 'jenkins-plugin-cli --plugin-download-directory /var/jenkins_home/plugins --plugins workflow-job workflow-cps workflow-durable-task-step pipeline-stage-step && exec /usr/local/bin/jenkins.sh --httpListenAddress=127.0.0.1 --httpPort=18089'], timeout=600)
+                 'jenkins-plugin-cli --plugin-download-directory /var/jenkins_home/plugins --plugins workflow-job workflow-cps workflow-durable-task-step pipeline-stage-step pipeline-model-definition timestamper && exec /usr/local/bin/jenkins.sh --httpListenAddress=127.0.0.1 --httpPort=18089'], timeout=600)
             base = 'http://127.0.0.1:18089'
             opener = build_opener(ProxyHandler({}), HTTPCookieProcessor(http.cookiejar.CookieJar()))
             authorization = 'Basic ' + base64.b64encode(('lab-owner:' + password).encode()).decode()
@@ -92,6 +92,15 @@ j.save()
                 with opener.open(Request(base+path, data=data, headers=headers), timeout=10) as response:
                     return response.read(1048576).decode()
             wait(lambda: json.loads(request('/api/json')).get('mode'), 360)
+            boundary='ops-'+uid
+            source=Path('/work/cloudlaunch/Jenkinsfile').read_bytes()
+            multipart=('--'+boundary+'\r\nContent-Disposition: form-data; name="jenkinsfile"; filename="Jenkinsfile"\r\nContent-Type: text/plain\r\n\r\n').encode()+source+('\r\n--'+boundary+'--\r\n').encode()
+            validation=request('/pipeline-model-converter/validate',multipart,'multipart/form-data; boundary='+boundary)
+            if 'Jenkinsfile successfully validated' not in validation:
+                (output/'cloudlaunch-pipeline-validation.txt').write_text(validation[:4000])
+                raise RuntimeError('CloudLaunch declarative pipeline validation failed')
+            (output/'cloudlaunch-pipeline-validation.txt').write_text(validation)
+            evidence['checks'].append('Actual Jenkins declarative linter accepted CloudLaunch Jenkinsfile; no deployment executed')
             pipeline = '''<flow-definition plugin="workflow-job"><definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps"><script>node { stage('Owned failure') { sh 'echo permission denied in isolated test; exit 7' } }</script><sandbox>true</sandbox></definition></flow-definition>'''
             request('/createItem?name=owned-failure', pipeline.encode(), 'application/xml')
             request('/job/owned-failure/build', b'')
