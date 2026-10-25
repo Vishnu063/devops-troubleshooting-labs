@@ -180,3 +180,8 @@ flowchart LR
   O --> R[Recovery criteria + report + scoped cleanup]
 ```
 
+
+## Self-hosted integration review (2026-10-25)
+
+[Ops Pilot setup and read-only permission guide](https://github.com/Vishnu063/ops-pilot/blob/feat/public-selfhosted-readiness/docs/SELF-HOSTING.md) · [Current cross-project readiness and actual evidence](https://github.com/Vishnu063/ops-pilot/blob/feat/public-selfhosted-readiness/docs/PUBLIC-READINESS.md).
+`ecosystem/extended.py` is explicitly opt-in for owned disposable CI. It exercises a real authenticated failing Jenkins scripted pipeline and five real Kind workload failures through Ops Pilot collectors. The enclosing CI daemon has an enforced 8 GiB limit; service phases are sequential. Pending or failed stages remain visible in result artifacts, and ownership cleanup is required. Prepared tests are not a pass; use the linked actual run evidence.
