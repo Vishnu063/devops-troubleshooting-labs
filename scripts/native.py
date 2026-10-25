@@ -1,5 +1,6 @@
 """Reproducible local faults, scoped cleanup, and behavioral recovery grading."""
 import json
+import re
 import shutil
 import subprocess
 import time
@@ -146,7 +147,7 @@ def fault_observed(i):
         if i in ['006','019']:
             if d['State']['Status']!='exited' or d['State']['ExitCode']==0:return False
             logs=compose(i,'logs','--no-color','web',capture=True).stdout
-            return ('Address already in use' if i=='006' else 'required variable APP_MODE missing') in logs
+            return bool(re.search(r'\bAddress (?:already )?in use\b',logs)) if i=='006' else 'required variable APP_MODE missing' in logs
         if not d['State']['Running']:return False
         ports=[(key,entry) for key,values in (d['NetworkSettings']['Ports'] or {}).items() for entry in (values or [])]
         if len(ports)!=1 or ports[0][1]['HostIp']!='127.0.0.1':return False
@@ -305,4 +306,5 @@ def operate(action,i,samples=3,interval=1,wait=120):
         return 0 if passed else 1
     except (RuntimeError,OSError,subprocess.TimeoutExpired,ValueError) as error:
         print(f'Lab error: {error}');return 2
+
 

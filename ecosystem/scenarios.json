@@ -1,0 +1,112 @@
+[
+  {
+    "id": "container-stopped",
+    "existing": "ecosystem/acceptance.py (new owned-container scenario)",
+    "failure": "Stop only the disposable CloudLaunch-owned container",
+    "alert": "EcosystemApplicationDown",
+    "evidence": "Docker exited identity + failed HTTP probe",
+    "diagnosis": "Collect native state and exit reason; cause remains a hypothesis",
+    "remediation": "Separate exact-plan approval then allowlisted Docker restart",
+    "verification": "Matching container, HTTP 200, fresh Prometheus scrape and Alertmanager resolution",
+    "cleanup": "CloudLaunch cleanup validates the recorded ownership label"
+  },
+  {
+    "id": "health-failure",
+    "existing": "runnable/012",
+    "failure": "Use a wrong endpoint in a disposable configuration",
+    "alert": "EcosystemApplicationDown",
+    "evidence": "HTTP failure while container may remain running",
+    "diagnosis": "Compare path/port/configuration before attributing cause",
+    "remediation": "Correct scoped configuration after review; restart alone may fail",
+    "verification": "Configured HTTP policy; wrong endpoint must remain failed",
+    "cleanup": "Existing lab down/reset ownership checks"
+  },
+  {
+    "id": "crash-loop",
+    "existing": "runnable/023",
+    "failure": "Run the existing broken Kind fixture only",
+    "alert": "Restart/rollout warnings when kube metrics configured",
+    "evidence": "CrashLoopBackOff, previous log signature and restart count",
+    "diagnosis": "Triage Kubernetes collector and Platform namespace events",
+    "remediation": "Review startup/configuration; no unapproved cluster changes",
+    "verification": "Pod readiness, observed rollout generation, endpoint and configured metrics",
+    "cleanup": "Existing Kind lab namespace runner"
+  },
+  {
+    "id": "image-pull",
+    "existing": "runnable/024",
+    "failure": "Existing bad-image disposable Kind fixture",
+    "alert": "Rollout unavailable when configured",
+    "evidence": "ImagePullBackOff or ErrImagePull event",
+    "diagnosis": "Check immutable image availability and registry authorization",
+    "remediation": "Owner-approved corrected image through existing GitOps workflow",
+    "verification": "Successful rollout plus application readiness",
+    "cleanup": "Existing namespace-scoped runner"
+  },
+  {
+    "id": "missing-env",
+    "existing": "runnable/026",
+    "failure": "Existing missing-configuration Kind fixture",
+    "alert": "Rollout unavailable when configured",
+    "evidence": "CreateContainerConfigError and referenced missing key, never Secret values",
+    "diagnosis": "Inspect configuration references only",
+    "remediation": "Reviewed configuration change; no automatic Secret creation",
+    "verification": "Readiness and agreed application behavior",
+    "cleanup": "Existing namespace-scoped runner"
+  },
+  {
+    "id": "rollout-failed",
+    "existing": "runnable/057",
+    "failure": "Existing failed deployment in owned Kind lab",
+    "alert": "EcosystemRolloutUnavailable when kube-state-metrics exists",
+    "evidence": "Observed generation and unavailable replicas",
+    "diagnosis": "Correlate events and current rollout",
+    "remediation": "Separate reviewed deployment/rollback policy",
+    "verification": "Ready replicas, rollout and HTTP policy",
+    "cleanup": "Existing lab reset/down"
+  },
+  {
+    "id": "resource-pressure",
+    "existing": "runnable/025",
+    "failure": "Bounded resource fixture only; never exhaust the shared host",
+    "alert": "Configured restart/resource alerts",
+    "evidence": "OOM/resource-request or scheduling evidence",
+    "diagnosis": "Resource limit versus observed pressure, no assumed leak",
+    "remediation": "Reviewed limits/workload correction",
+    "verification": "Sustained readiness and configured resource metrics",
+    "cleanup": "Existing lab resources only"
+  },
+  {
+    "id": "broken-service",
+    "existing": "runnable/012",
+    "failure": "Existing broken nginx service configuration",
+    "alert": "HTTP probe failed",
+    "evidence": "Container state, endpoint and config syntax",
+    "diagnosis": "Check listener/upstream scope without arbitrary commands",
+    "remediation": "Reviewed fixed fixture",
+    "verification": "Actual endpoint success",
+    "cleanup": "Existing Docker lab reset/down"
+  },
+  {
+    "id": "jenkins-failure",
+    "existing": "scenarios/level-1/017",
+    "failure": "Prepared pipeline failure in an owned Jenkins test job",
+    "alert": "Failed DeploymentEvent from CloudLaunch",
+    "evidence": "Release SHA, build result, optional Trivy and health outcomes",
+    "diagnosis": "Triage evidence references; Jenkins access optional",
+    "remediation": "Fix pipeline through reviewed repository changes; no remote shell",
+    "verification": "A fresh test build plus application checks",
+    "cleanup": "Delete only the explicitly owned test job after review"
+  },
+  {
+    "id": "verification-failed",
+    "existing": "ecosystem/acceptance.py (new failed-verification path)",
+    "failure": "Restart disposable container while requiring a deliberately wrong endpoint",
+    "alert": "HTTP probe continues failing",
+    "evidence": "Command success with failed HTTP policy",
+    "diagnosis": "Infrastructure recovery is insufficient",
+    "remediation": "Inspect evidence and create a new separately approved plan if appropriate",
+    "verification": "Must remain failed/inconclusive, not resolved",
+    "cleanup": "Owned disposable resources only"
+  }
+]

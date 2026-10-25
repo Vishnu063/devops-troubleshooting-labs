@@ -164,3 +164,26 @@ python3 scripts/validate.py
 CI checks repository integrity, original faults, incomplete compound repairs, repeated recovery checks, reset, and cleanup on disposable environments.
 
 [Security reporting](SECURITY.md) · [MIT license](LICENSE)
+
+
+## Connected ecosystem practice
+
+The optional [ecosystem scenario catalog and acceptance driver](ecosystem/README.md) connect the existing labs to CloudLaunch's disposable sample, real Prometheus/Alertmanager, Triage diagnosis and Ops Pilot's backend approval/recovery controls. All ten initial incident categories include injection/evidence/remediation/verification/cleanup guidance. Scenario metadata is not proof that every Kubernetes/Jenkins/resource alert has run. Existing native runners, reset/down checks and session grading remain unchanged. The lightweight full-path test runs on an owned disposable Docker CI runner; it never touches customer infrastructure.
+
+The new lightweight driver passed [real five-project acceptance](https://github.com/Vishnu063/ops-pilot/actions/runs/40074300156), including actual alert delivery, credential separation, refusal before approval, native restart/HTTP/metrics recovery and ownership-checked cleanup. The existing Docker suite also passed after a bind-error wording compatibility fix. [Detailed results and exact implementation refs](https://github.com/Vishnu063/ops-pilot/blob/feat/unified-devops-engineer/docs/ECOSYSTEM-RESULTS.md). A scenario mapping is not proof that all optional cluster/Jenkins/provider paths were exercised.
+
+```mermaid
+flowchart LR
+  L[Owned lab failure] --> M[Real monitoring alert]
+  M --> T[Triage evidence / diagnosis]
+  T --> O[Ops Pilot separate approval]
+  O --> R[Recovery criteria + report + scoped cleanup]
+```
+
+
+## Self-hosted integration review (2026-10-25)
+
+[Ops Pilot setup and read-only permission guide](https://github.com/Vishnu063/ops-pilot/blob/feat/public-selfhosted-readiness/docs/SELF-HOSTING.md) · [Current cross-project readiness and actual evidence](https://github.com/Vishnu063/ops-pilot/blob/feat/public-selfhosted-readiness/docs/PUBLIC-READINESS.md).
+`ecosystem/extended.py` is explicitly opt-in for owned disposable CI. It exercises a real authenticated failing Jenkins scripted pipeline and five real Kind workload failures through Ops Pilot collectors. The enclosing CI daemon has an enforced 8,000,000,000-byte limit; service phases are sequential. Pending or failed stages remain visible in result artifacts, and ownership cleanup is required. Prepared tests are not a pass; use the linked actual run evidence.
+
+Verified implementation `7e68ff820049deddccd2f086d0e15e49dd56aec1`: [original repository, Docker and Kind suites](https://github.com/Vishnu063/devops-troubleshooting-labs/actions/runs/40204406678) passed. The [expanded real Jenkins/Kind and five-project budget acceptance](https://github.com/Vishnu063/ops-pilot/actions/runs/40204417788) also passed: 4,151,042,048-byte enclosing peak under the strict 8,000,000,000-byte limit, zero enclosing local limit/OOM events, and verified owned cleanup. Intentional pod OOM events are distinguished from enclosing-budget exhaustion. These phases are sequential, not a concurrent production capacity promise.
