@@ -60,6 +60,9 @@ def main():
             if limit != str(8 * 1000**3):
                 raise RuntimeError('Expected an enforced enclosing 8 GB cgroup')
             evidence['memory_limit_bytes'] = int(limit)
+            def local_memory_events():
+                return {key:int(value) for key,value in (line.split() for line in Path('/sys/fs/cgroup/memory.events.local').read_text().splitlines())}
+            evidence['enclosing_local_events_before'] = local_memory_events()
             password = secrets.token_urlsafe(32)
             os.environ['OPS_LAB_JENKINS_USER'] = 'lab-owner'
             os.environ['OPS_LAB_JENKINS_PASSWORD'] = password
@@ -169,6 +172,10 @@ j.save()
             evidence['elapsed_seconds']=round(time.monotonic()-started,3)
             peak=Path('/sys/fs/cgroup/memory.peak')
             evidence['enclosing_cgroup_peak_bytes']=int(peak.read_text()) if peak.exists() else None
+            evidence['enclosing_local_events_after']=local_memory_events()
+            evidence['enclosing_budget_oom_free']=all(evidence['enclosing_local_events_after'].get(key,0)==0 for key in ('max','oom','oom_kill','oom_group_kill'))
+            if not evidence['enclosing_budget_oom_free']:
+                evidence['status']='failed'
             if cleanup_errors:evidence['status']='failed'
             (output/'extended-result.json').write_text(json.dumps(evidence,indent=2))
             print(json.dumps(evidence,indent=2),flush=True)
